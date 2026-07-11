@@ -20,9 +20,9 @@ try {
   await page.getByText('READY TO EXECUTE').waitFor();
   await page.screenshot({ path: path.join(artifacts, '02-plan.png'), fullPage: true });
 
-  await page.getByRole('button', { name: 'Start secure run' }).click();
-  await page.getByText('Starting isolated workspace').waitFor();
-  await page.getByText('LIVE APPLICATION').waitFor({ timeout: 8_000 });
+  await page.getByRole('button', { name: /Start controlled run|Start hosted browser run|Run deterministic demo/ }).click();
+  await page.getByRole('heading', { name: /Starting sandboxed controller|Starting visual workflow replay/ }).waitFor();
+  await page.getByText(/H HOSTED BROWSER \+ LOCAL VIEW|VISUAL WORKFLOW REPLAY/).first().waitFor({ timeout: 8_000 });
   await page.waitForTimeout(5_300);
   await page.screenshot({ path: path.join(artifacts, '03-live-capture.png'), fullPage: true });
 

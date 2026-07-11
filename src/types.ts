@@ -83,6 +83,51 @@ export interface HComputerStatus {
   reachable: boolean;
   targetConfigured: boolean;
   region: 'eu' | 'us';
-  mode: 'cloud' | 'demo';
+  mode: HComputerMode;
   message: string;
+  agent?: string;
+  sandbox?: NemoClawStatus;
+}
+
+export interface GradiumStatus {
+  configured: boolean;
+  available: boolean;
+  message: string;
+  maxAudioBytes?: number;
+}
+
+export type HComputerMode = 'sandbox' | 'cloud' | 'demo';
+
+export interface NemoClawStatus {
+  available: boolean;
+  ready: boolean;
+  required: boolean;
+  sandboxName: string;
+  message: string;
+  configured?: boolean;
+  enforced?: boolean;
+  phase?: string;
+  mode?: 'required' | 'preferred' | 'off';
+  cliAvailable?: boolean;
+  openshellAvailable?: boolean;
+  providerAttached?: boolean;
+  policyApplied?: boolean;
+  workerReady?: boolean;
+}
+
+export interface HSessionSnapshot {
+  id?: string;
+  sessionId?: string;
+  status?: string | HSessionState;
+  state?: string | HSessionState;
+  session?: {
+    id?: string;
+    status?: string | HSessionState;
+    state?: string | HSessionState;
+  };
+}
+
+export interface HSessionState {
+  status?: string | HSessionState;
+  state?: string | HSessionState;
 }

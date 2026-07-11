@@ -1,0 +1,38 @@
+[project]
+name = "arcflash-copilot"
+version = "0.2.0"
+description = "Python orchestration service for sandboxed ArcFlash Copilot computer-use workflows"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "hai-agents==0.1.12",
+  "httpx>=0.28,<1",
+  "pydantic-settings>=2.10,<3",
+  "pyyaml>=6,<7",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4,<10",
+  "pytest-asyncio>=1,<2",
+]
+study = [
+  "pandapower==3.4.0",
+  "arcflash-calc @ git+https://github.com/LiaungYip/arcflash.git@a3f1a6504b3dae6837f93d1d41910a3d814610d0",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/arcflash_api"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+asyncio_mode = "auto"

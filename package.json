@@ -1,24 +1,24 @@
 {
   "name": "arcflash-copilot",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -n WEB,API -c cyan,magenta \"vite --host 0.0.0.0\" \"tsx watch server/index.ts\"",
+    "dev": "concurrently -k -n WEB,API -c cyan,magenta \"vite --host 0.0.0.0\" \"uv run uvicorn arcflash_api.main:app --reload --reload-dir backend --port 8787\"",
     "dev:web": "vite --host 0.0.0.0",
-    "dev:api": "tsx watch server/index.ts",
+    "dev:api": "uv run uvicorn arcflash_api.main:app --reload --reload-dir backend --port 8787",
     "build": "tsc -b && vite build",
-    "start": "NODE_ENV=production tsx server/index.ts",
+    "start": "uv run python -m arcflash_api",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
+    "test:backend": "uv run pytest",
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",
     "qa:flow": "node scripts/qa-flow.mjs",
-    "engine:generate": "python3 engine/generate_cv104_study.py"
+    "engine:generate": "uv run python engine/generate_cv104_study.py",
+    "setup:nemoclaw": "uv run python scripts/bootstrap_nemoclaw.py"
   },
   "dependencies": {
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
     "framer-motion": "^12.42.2",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.24.0",
@@ -26,14 +26,12 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^10.0.3",
     "playwright-core": "^1.61.1",
-    "tsx": "^4.23.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.4",
     "vitest": "^4.1.10"

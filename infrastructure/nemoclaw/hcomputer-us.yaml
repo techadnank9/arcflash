@@ -1,0 +1,22 @@
+preset:
+  name: arcflash-hcomputer-us
+  description: "Allow only the ArcFlash Python worker to create and inspect H Computer sessions in the US region."
+
+network_policies:
+  arcflash_hcomputer:
+    name: arcflash-hcomputer-us
+    endpoints:
+      - host: agp.hcompany.ai
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: POST, path: "/api/v2/sessions" }
+          - allow: { method: GET, path: "/api/v2/sessions/*" }
+          - allow: { method: GET, path: "/api/v2/sessions/*/changes" }
+          - allow: { method: POST, path: "/api/v2/sessions/*/pause" }
+          - allow: { method: POST, path: "/api/v2/sessions/*/resume" }
+          - allow: { method: DELETE, path: "/api/v2/sessions/*" }
+    binaries:
+      - { path: "/usr/bin/python3*" }
+      - { path: "/usr/local/bin/python3*" }

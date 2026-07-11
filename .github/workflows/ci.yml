@@ -5,6 +5,20 @@ on:
   pull_request:
 
 jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --extra dev --locked
+      - run: uv run pytest
+      - run: uv run python -m py_compile backend/arcflash_api/*.py scripts/bootstrap_nemoclaw.py
+
   web:
     runs-on: ubuntu-latest
     steps:

@@ -1,0 +1,43 @@
+[Unit]
+Description=ArcFlash Copilot FastAPI service
+Documentation=https://github.com/techadnank9/arcflash
+Wants=network-online.target
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=arcflash
+Group=arcflash
+SupplementaryGroups=docker
+WorkingDirectory=/opt/arcflash
+EnvironmentFile=/etc/arcflash/arcflash.env
+Environment=HOME=/home/arcflash
+# The official installer may place nemoclaw in one of the user-local paths.
+# Keeping the service and NemoClaw under the same account also gives the API
+# access to the same onboarded gateway and sandbox state.
+Environment=PATH=/home/arcflash/.local/bin:/home/arcflash/.nemoclaw/bin:/home/arcflash/.npm-global/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/arcflash/.venv/bin/python -m uvicorn arcflash_api.main:app --host 127.0.0.1 --port 8787 --proxy-headers --forwarded-allow-ips 127.0.0.1
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGINT
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+ReadWritePaths=/home/arcflash
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+RestrictNamespaces=false
+RestrictRealtime=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
