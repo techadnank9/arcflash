@@ -1,0 +1,15 @@
+node_modules/
+.venv/
+engine/output/
+dist/
+.DS_Store
+.env
+.env.local
+.env.*.local
+coverage/
+playwright-report/
+test-results/
+artifacts/
+/home.png
+*.log
+*.tsbuildinfo

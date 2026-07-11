@@ -1,0 +1,41 @@
+{
+  "name": "arcflash-copilot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n WEB,API -c cyan,magenta \"vite --host 0.0.0.0\" \"tsx watch server/index.ts\"",
+    "dev:web": "vite --host 0.0.0.0",
+    "dev:api": "tsx watch server/index.ts",
+    "build": "tsc -b && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --pretty false",
+    "qa:flow": "node scripts/qa-flow.mjs",
+    "engine:generate": "python3 engine/generate_cv104_study.py"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "framer-motion": "^12.42.2",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^1.24.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "concurrently": "^10.0.3",
+    "playwright-core": "^1.61.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10"
+  }
+}

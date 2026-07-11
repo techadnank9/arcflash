@@ -1,0 +1,3 @@
+# Reproducible open-source study adapters.
+pandapower==3.4.0
+arcflash-calc @ git+https://github.com/LiaungYip/arcflash.git@a3f1a6504b3dae6837f93d1d41910a3d814610d0
