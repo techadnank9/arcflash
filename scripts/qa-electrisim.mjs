@@ -42,10 +42,10 @@ const completedSession = () => ({
     checkpoints: [
       'Opened the public Electrisim editor',
       'Closed the Device dialog without choosing Create New Diagram or Open Existing Diagram',
-      'Located Line below Bus and Generator ~ below Source in the component palette',
-      'Drew the Line directly below Bus as an unconnected item',
-      'Drew Generator ~ directly below Source as an unconnected item',
-      'Visually confirmed the Line and Generator ~ on canvas',
+      'Located Generator ~, first Transformer, External Grid, Motor M, and Bus in the component palette',
+      'Placed Generator, Transformer, two External Grids, and Motor left-to-right across the upper third',
+      'Connected Generator, Transformer, both External Grids, and Motor with snapped Bus conductors',
+      'Visually confirmed the centered Generator, Transformer, two External Grids, and Motor above the canvas midpoint',
       'Stopped without saving or simulation',
     ],
   },
@@ -185,7 +185,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'The Device dialog is closed. The component palette shows Line directly below the Bus header and Generator ~ directly below the Source header.',
+            text: 'The Device dialog is closed. The palette shows Generator ~, the first Transformer, External Grid, Motor M under Rotating Equipment, and the horizontal Bus conductor.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -194,8 +194,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:04Z',
           data: {
             kind: 'policy_event',
-            content: 'Use atomic drag_web to place Line below Bus on the grid directly below Simulate.',
-            tool_reqs: [{ id: 'tool-2', tool_name: 'drag_web', args: { target: 'Line below Bus to the grid directly below Simulate' } }],
+            content: 'Use atomic drag_web to place Generator, the first Transformer, two External Grids, and Motor left-to-right across the upper third of the grid.',
+            tool_reqs: [{ id: 'tool-2', tool_name: 'drag_web', args: { target: 'All five exact components to an upper-third centered row' } }],
           },
         },
         {
@@ -203,8 +203,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:05Z',
           data: {
             kind: 'policy_event',
-            content: 'Use atomic drag_web to place Generator ~ below Source on the grid below Simulate beside Line.',
-            tool_reqs: [{ id: 'tool-3', tool_name: 'drag_web', args: { target: 'Generator ~ below Source to the grid below Simulate beside Line' } }],
+            content: 'Use atomic drag_web to snap horizontal Bus conductors across Generator, Transformer, both External Grids, and Motor.',
+            tool_reqs: [{ id: 'tool-3', tool_name: 'drag_web', args: { target: 'Bus endpoints snapped between all five components' } }],
           },
         },
         {
@@ -213,7 +213,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'The Line and Generator ~ are visible as two separate unconnected items on the canvas. The diagram remains unsaved and no simulation ran.',
+            text: 'Generator, the first Transformer, two External Grids, and Motor are visibly connected by Bus conductors in a centered row in the upper third above the canvas midpoint. The diagram remains unsaved and no simulation ran.',
             image: { source: screenshotSource, type: 'url', media_type: 'image/png' },
             metadata: { url: 'https://app.electrisim.com/' },
           },
@@ -226,7 +226,7 @@ await context.route('**/api/electrisim/**', async (route) => {
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Closed the Device dialog, placed the Line below Bus and Generator ~ below Source as two unconnected items, confirmed both were visible, and stopped without saving or running a simulation.'
+        ? 'Closed the Device dialog, placed Generator, the first Transformer, two External Grids, and Motor in the upper third, connected them with Bus conductors, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;
@@ -290,8 +290,8 @@ try {
   await lab.getByText('Browser observation', { exact: true }).first().waitFor();
   await lab.getByText('Browser action', { exact: true }).first().waitFor();
   await lab.getByText(/Device dialog is closed/i).waitFor();
-  await lab.getByText(/drag_web.*Line below Bus.*below Simulate/i).waitFor();
-  await lab.getByText(/drag_web.*Generator.*below Source.*below Simulate/i).waitFor();
+  await lab.getByText(/drag_web.*Generator.*Transformer.*External Grid.*Motor.*upper third/i).waitFor();
+  await lab.getByText(/drag_web.*Bus.*Generator.*Transformer.*External Grid.*Motor/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
   assert.deepEqual(directScreenshotRequests, [], 'The browser must not fetch credentialed H resources directly.');
@@ -303,7 +303,7 @@ try {
   await lab.getByRole('button', { name: 'Reset lab' }).click();
   await lab.getByRole('button', { name: 'Start public drawing demo' }).click();
   await lab.getByTestId('electrisim-session-state').getByText(/completed/i).waitFor({ timeout: 15_000 });
-  await lab.getByText(/placed the Line below Bus and Generator.*stopped without saving/i).waitFor({ timeout: 5_000 });
+  await lab.getByText(/placed Generator.*Transformer.*External Grid.*Motor.*upper third.*Bus.*stopped without saving/i).waitFor({ timeout: 5_000 });
   assert.equal(sessionStarts, 2, 'Reset should allow a second independent session.');
   assert.ok(sessionReads > 0, 'The lab must poll its dedicated session endpoint.');
   const checkpoints = lab.getByTestId('electrisim-checkpoints');

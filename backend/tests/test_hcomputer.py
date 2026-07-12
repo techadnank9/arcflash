@@ -193,7 +193,7 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
 
     assert session["id"] == "h-1"
     assert session["workflow"] == {
-        "id": "electrisim-public-unsaved-draw-v1",
+        "id": "electrisim-public-unsaved-single-line-v3",
         "target": "https://app.electrisim.com/",
         "allowedOrigins": ["https://app.electrisim.com"],
         "mode": "public-unsaved-draw",
@@ -202,20 +202,23 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
             {"id": "device-dialog-closed", "label": "Close the Device dialog"},
             {
                 "id": "palette-items",
-                "label": "Locate Line under Bus and Generator ~ under Source",
+                "label": "Locate Generator, first Transformer, External Grid, Motor, and Bus",
             },
-            {"id": "line-placed", "label": "Draw the Line directly below Bus"},
             {
-                "id": "source-placed",
-                "label": "Draw Generator (~) directly below Source",
+                "id": "components-placed",
+                "label": "Place all five components across the upper canvas",
+            },
+            {
+                "id": "bus-connected",
+                "label": "Connect all five components with horizontal Bus conductors",
             },
             {
                 "id": "visual-confirmation",
-                "label": "Visually confirm Line and Generator on the canvas",
+                "label": "Confirm the centered upper-third single-line diagram",
             },
             {
                 "id": "safe-stop",
-                "label": "Stop without connecting, simulating, or saving",
+                "label": "Stop without configuring, simulating, or saving",
             },
         ],
     }
@@ -225,20 +228,26 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "without narrating, summarizing, or planning between them" in gateway.prompt
     assert "close the initial Device dialog with X" in gateway.prompt
     assert "without choosing Create New Diagram or Open Existing Diagram" in gateway.prompt
-    assert "do not drag the Bus header" in gateway.prompt
-    assert "horizontal gray Line directly below the Bus header" in gateway.prompt
-    assert "call the atomic drag_web tool once from its center" in gateway.prompt
-    assert "Generator (~) directly below the Source header" in gateway.prompt
-    assert "call atomic drag_web once from its center" in gateway.prompt
-    assert "below Simulate beside Line" in gateway.prompt
-    assert "mandatory before any final response" in gateway.prompt
-    assert "do not use click_web, move_mouse_web" in gateway.prompt
-    assert "do not stop before both drag_web calls have executed" in gateway.prompt
+    assert "Generator (~) from Source" in gateway.prompt
+    assert "first leftmost Transformer symbol under Transformers" in gateway.prompt
+    assert "two separate copies of External Grid" in gateway.prompt
+    assert "Motor (M) under Rotating Equipment" in gateway.prompt
+    assert "two External Grid blocks shown between Transformer and Motor are mandatory" in gateway.prompt
+    assert "upper third of the usable grid" in gateway.prompt
+    assert "clearly above the canvas midpoint" in gateway.prompt
+    assert "center the complete five-component group horizontally" in gateway.prompt
+    assert "horizontal Bus conductor directly under the Bus section" in gateway.prompt
+    assert "snapping each conductor endpoint" in gateway.prompt
+    assert "do not drag the Bus section header" in gateway.prompt
+    assert "do not leave merely overlapping or disconnected shapes" in gateway.prompt
+    assert "Use atomic drag_web for every palette-to-canvas placement" in gateway.prompt
+    assert "do not split a drag into move_mouse_web and click_web calls" in gateway.prompt
+    assert "All five component placements, including both External Grid copies" in gateway.prompt
+    assert "all four Bus connections are mandatory" in gateway.prompt
     assert "report DRAW_TOOL_UNAVAILABLE" in gateway.prompt
-    assert "do not drag the Source header" in gateway.prompt
-    assert "two separate unconnected items" in gateway.prompt
+    assert "Generator — Transformer — External Grid — External Grid — Motor" in gateway.prompt
     assert "Simple Example" not in gateway.prompt
-    assert "Do not sign in, pay, open or create a diagram" in gateway.prompt
+    assert "Do not sign in, pay, configure component values" in gateway.prompt
     assert "only claim a placement that the final observation confirms" in gateway.prompt
     with pytest.raises(ServiceError) as active:
         await service.create()

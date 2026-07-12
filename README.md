@@ -209,20 +209,24 @@ Open CV-104 → Verify Study Case A → Open Arc Flash
 The separate Electrisim lab sends H a fixed task requesting only the public
 `app.electrisim.com` origin. This is an agent instruction, not a network allowlist
 inside H's hosted browser. The task closes the initial Device dialog without
-choosing Create New Diagram or Open Existing Diagram, then drags the Line
-directly below the Bus header and Generator (`~`) directly below the Source
-header onto the canvas already behind it, visually confirms both, and stops. It
-never opens the template selector or native file picker. Those two unconnected
-in-memory placements are the only permitted edits: H must not configure them, modify an
-existing element, simulate, save, export, download, upload, import, share, open
-an existing project, sign in, or connect storage. It shares the API's
+choosing Create New Diagram or Open Existing Diagram, then builds an unsaved
+single-line topology with Generator (`~`), the first Transformer palette item,
+two External Grid blocks, Motor (`M`) under Rotating Equipment, and horizontal
+Bus conductors. It aligns Generator — Transformer — External Grid — External
+Grid — Motor across the upper third of the grid, centers the group horizontally,
+snaps the Bus endpoints to the components, visually confirms
+the result, and stops. It never opens the template selector or native file picker,
+substitutes other symbols, configures component values, simulates, saves, exports,
+downloads, uploads, imports, shares, opens an existing project, signs in, or
+connects storage. It shares the API's
 one-active-H-session guard with the original workflow, but does not write to
 ArcFlash evidence or reports.
 
-Each placement requires H's atomic `drag_web` action from the palette symbol to
-the grid below Simulate. `click_web`, `move_mouse_web`, click-to-select, and
-separate mouse calls are explicitly prohibited because they do not preserve the
-held mouse button across tool calls. The fixed prompt prioritizes both drag
+Each placement and connection requires H's atomic `drag_web` action from the
+palette symbol or endpoint to its target. `click_web`, `move_mouse_web`,
+click-to-select, and separate mouse calls are explicitly prohibited as drag
+substitutes because they do not preserve the held mouse button across tool calls.
+The fixed prompt prioritizes the required drag
 calls before narration or intermediate summaries to preserve H's execution
 budget, then performs one final visual confirmation.
 
