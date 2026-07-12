@@ -218,9 +218,10 @@ an existing project, sign in, or connect storage. It shares the API's
 one-active-H-session guard with the original workflow, but does not write to
 ArcFlash evidence or reports.
 
-Each placement uses a continuous drag-and-drop: press and hold the palette
-symbol, move right onto the grid below Simulate, and release on the canvas.
-Click-to-select followed by a canvas click is explicitly prohibited.
+Each placement requires H's atomic `drag_web` action from the palette symbol to
+the grid below Simulate. `click_web`, `move_mouse_web`, click-to-select, and
+separate mouse calls are explicitly prohibited because they do not preserve the
+held mouse button across tool calls.
 
 Electrisim `POST` and `DELETE` requests require
 `X-ArcFlash-Demo: electrisim-public-v1`. This non-secret custom header is a

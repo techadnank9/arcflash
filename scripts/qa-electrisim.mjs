@@ -194,8 +194,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:04Z',
           data: {
             kind: 'policy_event',
-            content: 'Press and hold Line below Bus, move right, and release on the grid directly below Simulate.',
-            tool_reqs: [{ id: 'tool-2', tool_name: 'drag', args: { target: 'Line below Bus to the grid directly below Simulate' } }],
+            content: 'Use atomic drag_web to place Line below Bus on the grid directly below Simulate.',
+            tool_reqs: [{ id: 'tool-2', tool_name: 'drag_web', args: { target: 'Line below Bus to the grid directly below Simulate' } }],
           },
         },
         {
@@ -203,8 +203,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:05Z',
           data: {
             kind: 'policy_event',
-            content: 'Press and hold Generator ~ below Source, move right, and release on the grid below Simulate beside Line.',
-            tool_reqs: [{ id: 'tool-3', tool_name: 'drag', args: { target: 'Generator ~ below Source to the grid below Simulate beside Line' } }],
+            content: 'Use atomic drag_web to place Generator ~ below Source on the grid below Simulate beside Line.',
+            tool_reqs: [{ id: 'tool-3', tool_name: 'drag_web', args: { target: 'Generator ~ below Source to the grid below Simulate beside Line' } }],
           },
         },
         {
@@ -290,8 +290,8 @@ try {
   await lab.getByText('Browser observation', { exact: true }).first().waitFor();
   await lab.getByText('Browser action', { exact: true }).first().waitFor();
   await lab.getByText(/Device dialog is closed/i).waitFor();
-  await lab.getByText(/drag.*Line below Bus.*below Simulate/i).waitFor();
-  await lab.getByText(/drag.*Generator.*below Source.*below Simulate/i).waitFor();
+  await lab.getByText(/drag_web.*Line below Bus.*below Simulate/i).waitFor();
+  await lab.getByText(/drag_web.*Generator.*below Source.*below Simulate/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
   assert.deepEqual(directScreenshotRequests, [], 'The browser must not fetch credentialed H resources directly.');

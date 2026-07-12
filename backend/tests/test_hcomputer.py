@@ -227,14 +227,14 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "canvas already behind it" in gateway.prompt
     assert "do not drag the Bus header" in gateway.prompt
     assert "horizontal gray Line item directly below the Bus header" in gateway.prompt
-    assert "one continuous drag-and-drop gesture, not clicks" in gateway.prompt
-    assert "press and hold the primary mouse button" in gateway.prompt
-    assert "moving right onto the grid directly below Simulate" in gateway.prompt
-    assert "Do not click Line and then click the canvas" in gateway.prompt
-    assert "repeat that same continuous drag exactly once" in gateway.prompt
+    assert "single atomic drag_web tool" in gateway.prompt
+    assert "do not use click_web, move_mouse_web" in gateway.prompt
+    assert "Call drag_web once from the center of the Line item" in gateway.prompt
+    assert "repeat drag_web exactly once" in gateway.prompt
     assert "Generator, shown as a tilde (~) directly below the Source header" in gateway.prompt
-    assert "same continuous press-hold-move-right-release gesture" in gateway.prompt
+    assert "call drag_web from its center" in gateway.prompt
     assert "below Simulate beside but not overlapping Line" in gateway.prompt
+    assert "report DRAW_TOOL_UNAVAILABLE" in gateway.prompt
     assert "do not drag the Source header" in gateway.prompt
     assert "two separate unconnected items" in gateway.prompt
     assert "do not select any category, example, or template" in gateway.prompt
