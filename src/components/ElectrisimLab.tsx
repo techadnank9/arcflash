@@ -39,28 +39,21 @@ const DEMO_CHECKPOINTS = [
     match: /app\.electrisim\.com|editor free|public editor/i,
   },
   {
-    id: 'new-diagram',
-    label: 'Create a fresh diagram',
-    detail: 'Choose Create New Diagram; never open an existing file.',
-    match: /create new diagram|fresh (?:diagram|canvas)|new diagram/i,
-  },
-  {
-    id: 'template',
-    label: 'Load Basic → Simple Example',
-    detail: 'Use the public built-in fixture as a safe disposable canvas.',
-    match: /simple example|basic (?:template|example)|three[ -]?bus/i,
-    requiresObservation: true,
+    id: 'device-dialog-closed',
+    label: 'Close the Device dialog',
+    detail: 'Close the initial dialog without choosing Create New Diagram or Open Existing Diagram.',
+    match: /clos(?:e|ed|ing)[^.]{0,60}device dialog|device dialog[^.]{0,60}clos(?:e|ed|ing)|dismiss(?:ed)?[^.]{0,60}device dialog/i,
   },
   {
     id: 'bus-palette',
     label: 'Locate the Bus palette item',
-    detail: 'Find Bus in the component palette without changing the existing fixture.',
+    detail: 'Find Bus in the component palette on the blank diagram.',
     match: /bus (?:item|symbol|component|palette)|component palette|palette.*bus/i,
   },
   {
     id: 'bus-placed',
-    label: 'Place one unsaved Bus',
-    detail: 'Drag exactly one new Bus into an empty area and leave it unconnected.',
+    label: 'Draw one unsaved Bus',
+    detail: 'Drag exactly one Bus onto the blank canvas and leave it unconnected.',
     match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,80}(?:new )?bus|bus[^.]{0,50}(?:drag|drop|place)/i,
   },
   {
@@ -431,7 +424,7 @@ export function ElectrisimLab() {
           <div>
             <span>REAL THIRD-PARTY EDITOR · UNSAVED DEMO</span>
             <h1>Electrisim public drawing lab</h1>
-            <p>Watch H open a fresh example, place one Bus on the canvas, and stop without saving or simulating.</p>
+            <p>Watch H close the Device dialog, draw one Bus on the exposed canvas, and stop without saving or simulating.</p>
           </div>
           <div className={`electrisim-state is-${currentStatus.tone}`} data-testid="electrisim-session-state" aria-live="polite">
             <i />
@@ -444,10 +437,11 @@ export function ElectrisimLab() {
           <aside className="electrisim-safety">
             <div className="electrisim-section-label"><ShieldCheck size={14} /><span>Requested browser scope</span></div>
             <h2>No-login drawing request</h2>
-            <p>The server asks H to edit only a fresh, unsaved example and supplies no credentials or arbitrary user URL. This remains an agent instruction, not a network allowlist inside H's hosted browser.</p>
+            <p>The server asks H to draw only on a fresh, blank diagram and supplies no credentials or arbitrary user URL. This remains an agent instruction, not a network allowlist inside H's hosted browser.</p>
             <dl>
-              <div><dt>Requested edit</dt><dd>One new Bus on a disposable example</dd></div>
+              <div><dt>Requested edit</dt><dd>One Bus on the canvas behind the Device dialog</dd></div>
               <div><dt>Requested exclusions</dt><dd>Simulation, login, payment, upload, save, storage</dd></div>
+              <div><dt>Dialog rule</dt><dd>Close Device; do not choose Create or Open</dd></div>
               <div><dt>Stop rule</dt><dd>Stop after the new Bus is visibly confirmed</dd></div>
             </dl>
             <div className="electrisim-safety-note"><Check size={13} /><span>The independent calculation below never uses values scraped from the website.</span></div>

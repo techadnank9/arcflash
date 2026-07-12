@@ -198,10 +198,9 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
         "mode": "public-unsaved-draw",
         "checkpoints": [
             {"id": "editor", "label": "Open the public Electrisim editor"},
-            {"id": "new-diagram", "label": "Choose Create New Diagram"},
-            {"id": "template", "label": "Load Basic → Simple Example"},
+            {"id": "device-dialog-closed", "label": "Close the Device dialog"},
             {"id": "bus-palette", "label": "Locate Bus in the component palette"},
-            {"id": "bus-placed", "label": "Place exactly one standalone Bus"},
+            {"id": "bus-placed", "label": "Draw exactly one standalone Bus"},
             {
                 "id": "visual-confirmation",
                 "label": "Visually confirm the new Bus on the canvas",
@@ -215,7 +214,14 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "Open https://app.electrisim.com/ directly" in gateway.prompt
     assert "only visit app.electrisim.com over HTTPS" in gateway.prompt
     assert "Do not sign in" in gateway.prompt
-    assert "drag exactly one new Bus" in gateway.prompt
+    assert "close it exactly once using its X or Close control" in gateway.prompt
+    assert "without choosing either Create New Diagram or Open Existing Diagram" in gateway.prompt
+    assert "Do not open the diagram selection dialog" in gateway.prompt
+    assert "canvas already behind it" in gateway.prompt
+    assert "drag exactly one Bus" in gateway.prompt
+    assert "do not select any category, example, or template" in gateway.prompt
+    assert "Simple Example" not in gateway.prompt
+    assert "click Create" in gateway.prompt
     assert "do not place a second element" in gateway.prompt
     assert "Do not open or use Simulate" in gateway.prompt
     assert "only claim the Bus was placed if you visually confirmed it" in gateway.prompt

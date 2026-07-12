@@ -41,11 +41,10 @@ const completedSession = () => ({
     message: 'Public Electrisim drawing completed without login, saving, or simulation.',
     checkpoints: [
       'Opened the public Electrisim editor',
-      'Created a fresh diagram',
-      'Loaded Basic → Simple Example',
+      'Closed the Device dialog without choosing Create New Diagram or Open Existing Diagram',
       'Located the Bus palette item',
-      'Placed one new unconnected Bus',
-      'Visually confirmed the new Bus on canvas',
+      'Drew one unconnected Bus on the blank canvas',
+      'Visually confirmed the Bus on canvas',
       'Stopped without saving or simulation',
     ],
   },
@@ -175,8 +174,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:02Z',
           data: {
             kind: 'policy_event',
-            content: 'Create a fresh disposable diagram.',
-            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { text: 'Create New Diagram' } }],
+            content: 'Close the Device dialog without choosing Create New Diagram or Open Existing Diagram.',
+            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { target: 'Device dialog X' } }],
           },
         },
         {
@@ -185,7 +184,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'The Basic Simple Example three-bus fixture is visible and the Bus component palette is available.',
+            text: 'A fresh blank diagram is visible and the Bus component palette is available.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -194,7 +193,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:04Z',
           data: {
             kind: 'policy_event',
-            content: 'Place exactly one new Bus without connecting it.',
+            content: 'Draw exactly one Bus on the blank canvas without connecting it.',
             tool_reqs: [{ id: 'tool-2', tool_name: 'drag', args: { target: 'Bus palette item to an empty area of the canvas' } }],
           },
         },
@@ -204,7 +203,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'A new unconnected Bus is visible on the canvas beside the existing three-bus fixture. The diagram remains unsaved and no simulation ran.',
+            text: 'A new unconnected Bus is visible on the otherwise blank canvas. The diagram remains unsaved and no simulation ran.',
             image: { source: screenshotSource, type: 'url', media_type: 'image/png' },
             metadata: { url: 'https://app.electrisim.com/' },
           },
@@ -217,7 +216,7 @@ await context.route('**/api/electrisim/**', async (route) => {
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Opened Basic → Simple Example, placed one new unconnected Bus, confirmed the new Bus was visible on the canvas, and stopped without saving or running a simulation.'
+        ? 'Closed the Device dialog, placed one new unconnected Bus on the exposed canvas, confirmed it was visible, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;
@@ -280,6 +279,7 @@ try {
   assert.equal(sessionStarts, 1, 'The first lab run should create one isolated Electrisim session.');
   await lab.getByText('Browser observation', { exact: true }).first().waitFor();
   await lab.getByText('Browser action', { exact: true }).first().waitFor();
+  await lab.getByText(/close the Device dialog without choosing Create New Diagram/i).waitFor();
   await lab.getByText(/drag.*Bus palette item/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
@@ -297,7 +297,7 @@ try {
   assert.ok(sessionReads > 0, 'The lab must poll its dedicated session endpoint.');
   const checkpoints = lab.getByTestId('electrisim-checkpoints');
   await checkpoints.waitFor();
-  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 7, 'Every drawing checkpoint must have matching H evidence.');
+  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 6, 'Every drawing checkpoint must have matching H evidence.');
 
   await lab.getByRole('button', { name: 'Run independent CV-104 validation' }).click();
   const calculation = lab.getByTestId('electrisim-calculation');
