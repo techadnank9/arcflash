@@ -184,7 +184,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'A fresh blank diagram is visible and the Bus component palette is available.',
+            text: 'The Device dialog is closed. A fresh blank diagram is visible and the Bus component palette is available.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -279,7 +279,7 @@ try {
   assert.equal(sessionStarts, 1, 'The first lab run should create one isolated Electrisim session.');
   await lab.getByText('Browser observation', { exact: true }).first().waitFor();
   await lab.getByText('Browser action', { exact: true }).first().waitFor();
-  await lab.getByText(/close the Device dialog without choosing Create New Diagram/i).waitFor();
+  await lab.getByText(/Device dialog is closed/i).waitFor();
   await lab.getByText(/drag.*Bus palette item/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
