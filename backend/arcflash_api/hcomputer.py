@@ -158,6 +158,7 @@ class HComputerService:
             "reachable": reachable,
             "targetConfigured": target_configured,
             "region": self.settings.hai_region,
+            "agent": self.settings.hcomputer_agent,
             "mode": mode,
             "message": message,
             "sandbox": sandbox.as_dict(),

@@ -23,7 +23,7 @@ export function OperatorWorkbench() {
       <header className="operator-header">
         <div className="brand-mark"><i><span /></i><div><strong>OPEN<span>GRID</span></strong><small>STUDY WORKBENCH</small></div></div>
         <div className="operator-project"><span>{project.id}</span><strong>{project.name}</strong><small>{project.revision}</small></div>
-        <div className="operator-agent"><i /><span>H COMPUTER CONTROL</span><strong>Visual session active</strong></div>
+        <div className="operator-agent"><i /><span>H COMPUTER TARGET</span><strong>Automation target ready</strong></div>
       </header>
 
       <nav className="operator-tabs" aria-label="Study workflow">

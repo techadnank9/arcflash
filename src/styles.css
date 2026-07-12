@@ -325,6 +325,12 @@ kbd { font: 8px var(--mono); color: var(--text-muted); border: 1px solid var(--l
 .workspace-label span { display: flex; align-items: center; gap: 7px; font: 700 8px var(--mono); letter-spacing: .12em; }
 .workspace-label span i { width: 5px; height: 5px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px rgba(105,196,134,.6); }
 .workspace-label strong { font: 700 7px var(--mono); color: var(--text-muted); letter-spacing: .08em; }
+.workspace-label.is-connecting span i { background: var(--accent); box-shadow: 0 0 8px rgba(245,166,35,.55); animation: live-pulse 1.2s infinite; }
+.workspace-label.is-replay span i { background: var(--accent); box-shadow: none; }
+.workspace-label.is-replay strong { color: var(--accent); }
+.workspace-runtime { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.workspace-runtime a { display: flex; align-items: center; gap: 4px; color: var(--success); font: 700 7px var(--mono); letter-spacing: .06em; text-decoration: none; }
+.workspace-runtime a:hover { color: var(--text); }
 .cockpit-evidence { min-width: 0; border-left: 1px solid var(--line); }
 .cockpit-layout.is-paused .workbench-shell::after { content: "SESSION PAUSED"; position: absolute; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(5,7,8,.72); backdrop-filter: blur(2px); color: var(--accent); font: 700 14px var(--mono); letter-spacing: .16em; }
 

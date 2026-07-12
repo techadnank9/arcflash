@@ -66,6 +66,10 @@ def settings(**values: object) -> Settings:
     )
 
 
+def test_settings_default_to_verified_h_web_surfer_agent() -> None:
+    assert Settings(_env_file=None).hcomputer_agent == "h/web-surfer-pro"
+
+
 @pytest.mark.asyncio
 async def test_service_uses_sandbox_gateway_and_builds_scoped_prompt() -> None:
     gateway = FakeGateway()
@@ -94,6 +98,7 @@ async def test_status_never_claims_sandbox_when_runtime_is_unavailable() -> None
     state = await service.status()
     assert state["configured"] is False
     assert state["mode"] == "demo"
+    assert state["agent"] == "h/web-surfer-pro"
     assert "deterministic" in state["message"]
 
 

@@ -109,6 +109,7 @@ NemoClaw controls the local Python launcher, accessible files, credential exposu
    ```dotenv
    PUBLIC_APP_URL=https://your-deployment.example.com
    HAI_REGION=eu
+   HCOMPUTER_AGENT=h/web-surfer-pro
    NEMOCLAW_MODE=required
    NEMOCLAW_SANDBOX=arcflash-copilot
    ```
@@ -130,6 +131,8 @@ NemoClaw controls the local Python launcher, accessible files, credential exposu
    ```
 
 The bootstrap performs only supported CLI operations: it finds the onboarded sandbox, registers a generic provider by environment-variable name (not value in argv), applies the selected policy preset, rebuilds so the provider is attached, uploads the one-shot worker, and verifies the final state. It does not install NemoClaw.
+
+`h/web-surfer-pro` is the hosted browser preset verified against this complete workflow. H's preset catalog can change; verify the configured name against the organization-scoped `GET /api/v2/agents` catalog when upgrading the H integration. A session is considered attached only after H returns a non-empty session ID.
 
 OpenShell providers registered through NemoClaw attach to sandboxes rebuilt on the same gateway. Use a dedicated demo gateway when provider scope must be narrow.
 

@@ -118,10 +118,15 @@ export interface NemoClawStatus {
 export interface HSessionSnapshot {
   id?: string;
   sessionId?: string;
+  session_id?: string;
+  agentViewUrl?: string;
+  agent_view_url?: string;
   status?: string | HSessionState;
   state?: string | HSessionState;
   session?: {
     id?: string;
+    agentViewUrl?: string;
+    agent_view_url?: string;
     status?: string | HSessionState;
     state?: string | HSessionState;
   };

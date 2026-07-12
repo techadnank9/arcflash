@@ -37,7 +37,7 @@ export function EvidenceRail({ evidence, selectedId, onSelect, isReview, onRecap
             <motion.div className="evidence-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <Crosshair size={24} />
               <strong>Waiting for source evidence</strong>
-              <span>Results will appear as H Computer inspects the study.</span>
+              <span>Results will appear as the local evidence replay advances.</span>
             </motion.div>
           )}
           {evidence.map((item, index) => {

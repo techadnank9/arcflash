@@ -11,6 +11,7 @@ import {
   automationSteps, commandText, evidenceCatalog, exceptionText, openSourceStack, project,
   projectFiles, seedAudit, studyAssumptions,
 } from './data';
+import { hExecutionPresentation } from './lib/hcomputer';
 import { generateDraftPdf, reportFilename } from './lib/report';
 import { applyReviewDisposition, canExportDraft } from './lib/safety';
 import type {
@@ -183,6 +184,18 @@ function sessionId(value: unknown): string | undefined {
   return firstString(value.id, value.sessionId, value.session_id, nested?.id);
 }
 
+function sessionAgentViewUrl(value: unknown): string | undefined {
+  if (!isRecord(value)) return undefined;
+  const nested = isRecord(value.session) ? value.session : undefined;
+  return firstString(value.agentViewUrl, value.agent_view_url, nested?.agentViewUrl, nested?.agent_view_url);
+}
+
+function apiErrorMessage(value: unknown, fallback: string): string {
+  if (!isRecord(value)) return fallback;
+  const detail = isRecord(value.detail) ? value.detail : undefined;
+  return firstString(detail?.message, value.message, value.code) ?? fallback;
+}
+
 const terminalHStates = new Set(['completed', 'failed', 'timed_out', 'interrupted']);
 const isTerminalHState = (state: string) => terminalHStates.has(state.toLowerCase());
 
@@ -343,7 +356,9 @@ function TaskPlan({ hStatus, nemoStatus, gradiumStatus, runtimeChecked, command,
   const sandboxReady = runtimeChecked && nemoClawEnforced(nemoStatus);
   const voiceReady = gradiumStatus.configured && gradiumStatus.available;
   const hCopy = hReady
-    ? hStatus.mode === 'sandbox' ? `Hosted browser · controller in ${nemoStatus.sandboxName}` : `Hosted browser · direct Python adapter`
+    ? hStatus.mode === 'sandbox'
+      ? `${hStatus.agent ?? 'H browser agent'} · controller in ${nemoStatus.sandboxName}`
+      : `${hStatus.agent ?? 'H browser agent'} · direct Python adapter`
     : 'No live browser request · deterministic replay';
   const nemoCopy = !runtimeChecked
     ? 'Checking local NemoClaw runtime'
@@ -383,7 +398,7 @@ function TaskPlan({ hStatus, nemoStatus, gradiumStatus, runtimeChecked, command,
       <aside className="execution-inspector">
         <div className="inspector-title"><span>EXECUTION CONTROLS</span><strong>Execution profile</strong></div>
         <div className="integration-stack">
-          <div className={hReady ? 'is-ready' : 'is-demo'}><i><Bot size={16} /></i><span><strong>H Computer</strong><small>{hCopy}</small></span><b>{!runtimeChecked ? 'CHECK' : hReady ? 'READY' : 'DEMO'}</b></div>
+          <div className={hReady ? 'is-ready' : 'is-demo'}><i><Bot size={16} /></i><span><strong>H Computer</strong><small>{hCopy}</small></span><b>{!runtimeChecked ? 'CHECK' : hReady ? 'CONFIG' : 'DEMO'}</b></div>
           <div className={!runtimeChecked ? 'is-checking' : sandboxReady ? 'is-ready' : nemoStatus.ready ? 'is-demo' : 'is-unavailable'}><i><Shield size={16} /></i><span><strong>NemoClaw controller</strong><small>{nemoCopy}</small></span><b>{!runtimeChecked ? 'CHECK' : sandboxReady ? 'READY' : nemoStatus.ready ? 'IDLE' : 'OFFLINE'}</b></div>
           <div className={voiceReady ? 'is-ready' : 'is-unavailable'}><i><Volume2 size={16} /></i><span><strong>Gradium voice</strong><small>{commandSource === 'gradium' ? 'Live command transcript captured' : gradiumStatus.message}</small></span><b>{voiceReady ? 'READY' : 'OFFLINE'}</b></div>
         </div>
@@ -404,8 +419,7 @@ function TaskPlan({ hStatus, nemoStatus, gradiumStatus, runtimeChecked, command,
   );
 }
 
-function WorkflowRail({ stepIndex, phase, hStatus, nemoStatus }: { stepIndex: number; phase: AppPhase; hStatus: HComputerStatus; nemoStatus: NemoClawStatus }) {
-  const hReady = hComputerReady(hStatus, nemoStatus);
+function WorkflowRail({ stepIndex, phase, hStatus, nemoStatus, hHosted }: { stepIndex: number; phase: AppPhase; hStatus: HComputerStatus; nemoStatus: NemoClawStatus; hHosted: boolean }) {
   return (
     <aside className="workflow-rail">
       <div className="workflow-rail-head"><span>AGENT PLAN</span><strong>{stepIndex < 0 ? 'Starting' : `${Math.min(stepIndex + 1, 9)} / 9`}</strong></div>
@@ -418,8 +432,8 @@ function WorkflowRail({ stepIndex, phase, hStatus, nemoStatus }: { stepIndex: nu
         ))}
       </ol>
       <div className="rail-services">
-        <div><Bot size={12} /><span>Browser execution</span><strong>{hReady ? 'H HOSTED' : 'REPLAY'}</strong></div>
-        <div><Shield size={12} /><span>Agent controller</span><strong>{nemoClawEnforced(nemoStatus) ? 'NEMOCLAW' : hStatus.mode === 'cloud' && hReady ? 'HOST DIRECT' : 'DEMO ONLY'}</strong></div>
+        <div><Bot size={12} /><span>Browser execution</span><strong>{hHosted ? 'H HOSTED' : 'REPLAY'}</strong></div>
+        <div><Shield size={12} /><span>Agent controller</span><strong>{hHosted && nemoClawEnforced(nemoStatus) ? 'NEMOCLAW' : hHosted && hStatus.mode === 'cloud' ? 'HOST DIRECT' : 'DEMO ONLY'}</strong></div>
         <div><AudioLines size={12} /><span>Voice</span><strong>CAPTURED</strong></div>
       </div>
     </aside>
@@ -535,6 +549,8 @@ export default function App() {
   const [runtimeChecked, setRuntimeChecked] = useState(false);
   const [hSessionId, setHSessionId] = useState<string | null>(null);
   const [hSessionState, setHSessionState] = useState<string>('idle');
+  const [hAgentViewUrl, setHAgentViewUrl] = useState<string | null>(null);
+  const [hSessionError, setHSessionError] = useState('');
   const [paused, setPaused] = useState(false);
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [editingEvidenceId, setEditingEvidenceId] = useState<string | null>(null);
@@ -596,7 +612,11 @@ export default function App() {
     const timer = window.setInterval(() => {
       fetch(`/api/hcomputer/sessions/${encodeURIComponent(hSessionId)}`)
         .then((response) => response.ok ? response.json() : Promise.reject(new Error('Session status unavailable')))
-        .then((snapshot: HSessionSnapshot) => updateHSessionState(sessionState(snapshot)))
+        .then((snapshot: HSessionSnapshot) => {
+          updateHSessionState(sessionState(snapshot));
+          const agentViewUrl = sessionAgentViewUrl(snapshot);
+          if (agentViewUrl) setHAgentViewUrl(agentViewUrl);
+        })
         .catch(() => updateHSessionState('connection_lost'));
     }, 3500);
     return () => window.clearInterval(timer);
@@ -607,6 +627,10 @@ export default function App() {
   const phaseIndex = phaseOrder.indexOf(phase);
   const unresolvedCount = evidence.some((item) => item.id === 'MCC-01' && item.clearingTime == null) ? 1 : 0;
   const editingEvidence = evidence.find((item) => item.id === editingEvidenceId) ?? null;
+  const hExecution = useMemo(
+    () => hExecutionPresentation(hSessionId, hSessionState),
+    [hSessionId, hSessionState],
+  );
   const voiceMessage = listening
     ? 'Listening · click stop when finished'
     : voicePhase === 'requesting'
@@ -783,26 +807,38 @@ export default function App() {
   const startCloudSession = async (): Promise<string | null> => {
     if (!hComputerReady(hStatus, nemoStatus)) return null;
     updateHSessionState('starting');
+    setHSessionError('');
+    setHAgentViewUrl(null);
     try {
       const response = await fetch('/api/hcomputer/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(60_000),
       });
-      if (!response.ok) throw new Error('Cloud session could not be started');
-      const session = await response.json() as HSessionSnapshot;
+      const payload: unknown = await response.json().catch(() => undefined);
+      if (!response.ok) throw new Error(apiErrorMessage(payload, 'Cloud session could not be started'));
+      const session = payload as HSessionSnapshot;
       const id = sessionId(session);
-      if (id) updateHSessionId(id);
+      if (!id) throw new Error('H returned a successful response without a session ID');
+      updateHSessionId(id);
+      setHAgentViewUrl(
+        sessionAgentViewUrl(session)
+        ?? `https://platform.hcompany.ai/agents/sessions/${encodeURIComponent(id)}`,
+      );
       updateHSessionState(sessionState(session));
       appendAudit(
         'H Computer',
         'CLOUD_SESSION_ATTACHED',
-        `${hStatus.mode === 'sandbox' ? 'NemoClaw-contained Python controller requested' : 'Host Python adapter requested'} H hosted browser session ${id?.slice(0, 8) ?? 'created'}`,
+        `${hStatus.mode === 'sandbox' ? 'NemoClaw-contained Python controller attached' : 'Host Python adapter attached'} H hosted browser session ${id.slice(0, 8)}`,
       );
-      return id ?? null;
-    } catch {
+      return id;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Cloud session could not be started';
+      updateHSessionId(null);
       updateHSessionState('fallback');
-      appendAudit('System', 'CLOUD_SESSION_FALLBACK', 'H Computer cloud start failed; deterministic visual replay continued without interrupting evidence capture');
+      setHAgentViewUrl(null);
+      setHSessionError(message);
+      appendAudit('System', 'CLOUD_SESSION_FALLBACK', `H Computer cloud start failed: ${message}. Deterministic visual replay continued.`);
       return null;
     }
   };
@@ -833,7 +869,7 @@ export default function App() {
   };
 
   const waitForHSettlement = async (id: string, version: number) => {
-    let remaining = 60_000;
+    let remaining = 165_000;
     while (remaining > 0 && runVersion.current === version) {
       if (pausedRef.current) {
         await new Promise((resolve) => window.setTimeout(resolve, 250));
@@ -859,14 +895,14 @@ export default function App() {
   const startRun = async () => {
     const version = ++runVersion.current;
     setEvidence([]); setSelectedId(undefined); setReview(null); setStepIndex(-1); setPaused(false); pausedRef.current = false;
-    updateHSessionId(null); updateHSessionState('idle');
+    updateHSessionId(null); updateHSessionState('idle'); setHAgentViewUrl(null); setHSessionError('');
     setPhase('booting');
     const hSessionPromise = startCloudSession();
     hSessionStartRef.current = hSessionPromise;
     if (nemoClawEnforced(nemoStatus) && hComputerReady(hStatus, nemoStatus)) {
-      appendAudit('NemoClaw', 'CONTROLLED_SESSION_STARTED', `Sandbox ${nemoStatus.sandboxName} started the local Python controller; the H visual browser remains hosted by H`);
+      appendAudit('NemoClaw', 'CONTROLLED_SESSION_REQUESTED', `Sandbox ${nemoStatus.sandboxName} requested the local Python controller; attachment awaits an H session ID`);
     } else if (hStatus.mode === 'cloud' && hComputerReady(hStatus, nemoStatus)) {
-      appendAudit('System', 'HOST_DIRECT_SESSION_STARTED', 'NemoClaw enforcement is off; the host Python adapter requested H\'s hosted browser directly');
+      appendAudit('System', 'HOST_DIRECT_SESSION_REQUESTED', 'NemoClaw enforcement is off; the host Python adapter requested H\'s hosted browser directly');
     } else if (nemoClawEnforced(nemoStatus)) {
       appendAudit('System', 'DEMO_RUNTIME_SELECTED', `NemoClaw sandbox ${nemoStatus.sandboxName} is ready but remained idle because H Computer is unavailable; deterministic replay started`);
     } else if (nemoStatus.ready) {
@@ -891,7 +927,12 @@ export default function App() {
       const step = automationSteps[index];
       setStepIndex(index);
       if (step.equipmentId) setSelectedId(step.equipmentId);
-      appendAudit(step.actor, eventTypeByStep[step.id], step.detail, step.equipmentId);
+      appendAudit(
+        liveSessionId ? step.actor : 'System',
+        eventTypeByStep[step.id],
+        liveSessionId ? step.detail : `${step.detail} · deterministic local replay`,
+        step.equipmentId,
+      );
       await waitWithPause(step.duration, version);
       if (runVersion.current !== version) return;
       if (step.evidenceId) {
@@ -959,7 +1000,7 @@ export default function App() {
     runVersion.current += 1;
     pausedRef.current = false;
     setPhase('home'); setCommand(''); setCommandSource('text'); setListening(false); setVoicePhase('idle'); setVoiceError(''); setStepIndex(-1); setEvidence([]); setSelectedId(undefined);
-    setAudit([]); setReview(null); updateHSessionId(null); updateHSessionState('idle'); setPaused(false); setApprovalOpen(false); setEditingEvidenceId(null); setAuditOpen(false); setMobileTab('run');
+    setAudit([]); setReview(null); updateHSessionId(null); updateHSessionState('idle'); setHAgentViewUrl(null); setHSessionError(''); setPaused(false); setApprovalOpen(false); setEditingEvidenceId(null); setAuditOpen(false); setMobileTab('run');
     clockRef.current = 8;
   };
 
@@ -973,6 +1014,8 @@ export default function App() {
     setPaused(false);
     updateHSessionId(null);
     updateHSessionState('interrupted');
+    setHAgentViewUrl(null);
+    setHSessionError('');
     setPhase('plan');
     appendAudit('System', 'SESSION_STOPPED', 'Computer-use workflow stopped by the engineer');
   };
@@ -1061,9 +1104,15 @@ export default function App() {
         {phase === 'booting' && <BootSequence key="booting" hStatus={hStatus} nemoStatus={nemoStatus} />}
         {phase === 'running' && (
           <motion.main key="running" className={`cockpit-layout${paused ? ' is-paused' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <WorkflowRail stepIndex={stepIndex} phase={phase} hStatus={hStatus} nemoStatus={nemoStatus} />
+            <WorkflowRail stepIndex={stepIndex} phase={phase} hStatus={hStatus} nemoStatus={nemoStatus} hHosted={hExecution.isHosted} />
             <div className={`cockpit-center mobile-${mobileTab}`}>
-              <div className="workspace-label"><span><i /> {hComputerReady(hStatus, nemoStatus) ? 'H HOSTED BROWSER + LOCAL VIEW' : 'VISUAL WORKFLOW REPLAY'}</span><strong>{hSessionId ? `H SESSION ${hSessionId.slice(0, 8).toUpperCase()}` : hComputerReady(hStatus, nemoStatus) ? hSessionState.toUpperCase() : 'DETERMINISTIC REPLAY'}</strong></div>
+              <div className={`workspace-label ${hExecution.className}`}>
+                <span><i /> {hExecution.label}</span>
+                <div className="workspace-runtime">
+                  {hAgentViewUrl && hExecution.isHosted && <a href={hAgentViewUrl} target="_blank" rel="noreferrer"><ExternalLink size={11} /> Agent View</a>}
+                  <strong title={hSessionError || hExecution.status}>{hExecution.status}</strong>
+                </div>
+              </div>
               <StudyWorkbench step={activeStep} stepIndex={stepIndex} selectedId={selectedId} captured={evidence} onSelect={setSelectedId} />
             </div>
             <div className={`cockpit-evidence mobile-${mobileTab}`}><EvidenceRail evidence={evidence} selectedId={selectedId} onSelect={setSelectedId} /></div>
@@ -1071,7 +1120,7 @@ export default function App() {
         )}
         {isReviewPhase && (
           <motion.main key="review" className="review-layout" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <WorkflowRail stepIndex={automationSteps.length} phase={phase} hStatus={hStatus} nemoStatus={nemoStatus} />
+            <WorkflowRail stepIndex={automationSteps.length} phase={phase} hStatus={hStatus} nemoStatus={nemoStatus} hHosted={hExecution.isHosted} />
             <div className={`review-center mobile-${mobileTab}`}><ReportPreview evidence={evidence} review={review} selectedId={selectedId} onSelectEvidence={setSelectedId} /></div>
             <ReviewInspector phase={phase} evidence={evidence} review={review} onApprove={() => setApprovalOpen(true)} onExport={exportDraft} onAudit={() => setAuditOpen(true)} onRecapture={requestRecapture} onEdit={setEditingEvidenceId} onFlag={flagEvidence} />
           </motion.main>

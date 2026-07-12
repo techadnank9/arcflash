@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     hai_api_key: SecretStr | None = None
     gradium_api_key: SecretStr | None = None
     hai_region: Literal["eu", "us"] = "eu"
-    hcomputer_agent: str = "h/web-surfer-holo3-1-35b"
+    hcomputer_agent: str = "h/web-surfer-pro"
     public_app_url: str | None = None
 
     nemoclaw_mode: Literal["required", "preferred", "off"] = "required"
