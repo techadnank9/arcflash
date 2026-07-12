@@ -199,15 +199,15 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
 
     assert session["id"] == "h-1"
     assert session["workflow"] == {
-        "id": "electrisim-public-unsaved-single-line-v5",
+        "id": "electrisim-public-unsaved-single-line-v6",
         "target": "https://app.electrisim.com/",
         "allowedOrigins": ["https://app.electrisim.com"],
         "mode": "public-unsaved-draw",
         "checkpoints": [
             {"id": "editor", "label": "Open the public Electrisim editor"},
             {
-                "id": "new-diagram",
-                "label": "Create a new untitled schematic diagram",
+                "id": "device-dialog-closed",
+                "label": "Dismiss the Device overlay without opening a file picker",
             },
             {
                 "id": "schematic-editor",
@@ -239,10 +239,14 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "only visit app.electrisim.com over HTTPS" in gateway.prompt
     assert "Do not sign in" in gateway.prompt
     assert "without narrating, summarizing, or planning between them" in gateway.prompt
-    assert "click Create New Diagram exactly once" in gateway.prompt
-    assert "never choose Open Existing Diagram" in gateway.prompt
-    assert "If Create New Diagram does not produce the schematic menu" in gateway.prompt
-    assert "Never scroll while the Device dialog is open" in gateway.prompt
+    assert "without choosing Create New Diagram or Open Existing Diagram" in gateway.prompt
+    assert "native file pickers that the hosted browser cannot complete" in gateway.prompt
+    assert "visible X once and observe" in gateway.prompt
+    assert "press Escape once and observe" in gateway.prompt
+    assert "click once on the dimmed area outside the overlay" in gateway.prompt
+    assert "Never repeat these attempts" in gateway.prompt
+    assert "never scroll while the Device overlay is open" in gateway.prompt
+    assert "report DEVICE_DIALOG_UNAVAILABLE" in gateway.prompt
     assert "Never click the green Map button" in gateway.prompt
     assert "Never use the Map Editor" in gateway.prompt
     assert "If a screen says Map Editor or shows geographic map tiles" in gateway.prompt

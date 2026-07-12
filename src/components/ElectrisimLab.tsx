@@ -39,10 +39,10 @@ const DEMO_CHECKPOINTS = [
     match: /app\.electrisim\.com|editor free|public editor/i,
   },
   {
-    id: 'new-diagram',
-    label: 'Create a new untitled schematic',
-    detail: 'Choose Create New Diagram once; never open an existing project.',
-    match: /(?:create|created|open|opened)[^.]{0,80}(?:new|untitled)[^.]{0,80}(?:schematic|diagram)|(?:untitled|new) diagram[^.]{0,80}(?:canvas|schematic|created|opened)/i,
+    id: 'device-dialog-closed',
+    label: 'Dismiss the Device overlay',
+    detail: 'Close the overlay without opening Create New Diagram, Open Existing Diagram, or a native file picker.',
+    match: /(?:clos(?:e|ed)|dismiss(?:ed)?)[^.]{0,80}(?:device|overlay|dialog)[^.]{0,120}(?:without|no|avoiding)[^.]{0,80}(?:file picker|create|open)|(?:device|overlay|dialog)[^.]{0,80}(?:clos(?:e|ed)|dismiss(?:ed)?)/i,
   },
   {
     id: 'schematic-editor',

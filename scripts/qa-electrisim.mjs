@@ -41,7 +41,7 @@ const completedSession = () => ({
     message: 'Public Electrisim drawing completed without login, saving, or simulation.',
     checkpoints: [
       'Opened the public Electrisim editor',
-      'Created a new untitled schematic diagram without opening an existing project',
+      'Dismissed the Device overlay without Create New Diagram, Open Existing Diagram, or a file picker',
       'Confirmed the schematic editor with symbol palette and grid-paper canvas and never entered Map Editor',
       'Located Generator ~, first Transformer, External Grid, Motor M, and Bus in the component palette',
       'Placed Generator, Transformer, two External Grids, and Motor left-to-right across the upper third',
@@ -176,8 +176,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:02Z',
           data: {
             kind: 'policy_event',
-            content: 'Click Create New Diagram once to open a new untitled schematic; never choose Open Existing Diagram.',
-            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { target: 'Create New Diagram' } }],
+            content: 'Dismiss the Device overlay without Create New Diagram, Open Existing Diagram, or a native file picker.',
+            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { target: 'Device overlay X' } }],
           },
         },
         {
@@ -186,7 +186,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'Created a new untitled schematic diagram. Confirmed the schematic editor with symbol palette and grid-paper canvas and never entered Map Editor. The palette shows Generator ~, the first Transformer, External Grid, Motor M under Rotating Equipment, and the horizontal Bus conductor.',
+            text: 'Dismissed the Device overlay without opening Create New Diagram, Open Existing Diagram, or a file picker. Confirmed the schematic editor with symbol palette and grid-paper canvas and never entered Map Editor. The palette shows Generator ~, the first Transformer, External Grid, Motor M under Rotating Equipment, and the horizontal Bus conductor.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -227,7 +227,7 @@ await context.route('**/api/electrisim/**', async (route) => {
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Created a new untitled schematic, placed Generator, the first Transformer, two External Grids, and Motor in the upper third, connected them with Bus conductors, and stopped without saving or running a simulation.'
+        ? 'Dismissed the Device overlay, placed Generator, the first Transformer, two External Grids, and Motor in the upper third, connected them with Bus conductors, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;

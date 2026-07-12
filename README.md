@@ -208,9 +208,10 @@ Open CV-104 → Verify Study Case A → Open Arc Flash
 
 The separate Electrisim lab sends H a fixed task requesting only the public
 `app.electrisim.com` origin. This is an agent instruction, not a network allowlist
-inside H's hosted browser. The task chooses Create New Diagram once in the
-initial Device dialog, verifies the new untitled schematic editor, and never
-opens an existing project. It then builds an unsaved
+inside H's hosted browser. The task dismisses the initial Device overlay without
+choosing Create New Diagram or Open Existing Diagram because those actions invoke
+native file pickers that the hosted browser cannot complete. It then verifies the
+schematic editor and builds an unsaved
 single-line topology with Generator (`~`), the first Transformer palette item,
 two External Grid blocks, Motor (`M`) under Rotating Equipment, and horizontal
 Bus conductors. It aligns Generator — Transformer — External Grid — External
@@ -227,9 +228,9 @@ The agent must remain in Electrisim's schematic editor, identified by the
 File/Edit/View menu, left symbol palette, and white grid-paper canvas. The green
 Map button is explicitly forbidden because it opens a separate geographic node
 editor. If Map Editor or map tiles appear, the run resets to the schematic URL
-once and fails closed unless the schematic landmarks return. The startup action
-is limited to one Create New Diagram click so retries cannot consume the drawing
-budget or fall through into Map mode.
+once and fails closed unless the schematic landmarks return. Overlay dismissal is
+limited to one X click, one Escape press, and one outside click so retries cannot
+consume the drawing budget or fall through into Map mode.
 
 Each placement and connection requires H's atomic `drag_web` action from the
 palette symbol or endpoint to its target. `click_web`, `move_mouse_web`,

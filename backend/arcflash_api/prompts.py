@@ -7,8 +7,8 @@ ELECTRISIM_DEMO_CHECKPOINTS = (
         "label": "Open the public Electrisim editor",
     },
     {
-        "id": "new-diagram",
-        "label": "Create a new untitled schematic diagram",
+        "id": "device-dialog-closed",
+        "label": "Dismiss the Device overlay without opening a file picker",
     },
     {
         "id": "schematic-editor",
@@ -57,7 +57,7 @@ def build_electrisim_prompt() -> str:
         (
             "Execute these actions immediately without narrating, summarizing, or planning between them; preserve the execution budget for completing the diagram.",
             "Open https://app.electrisim.com/ directly. This task must remain in the schematic editor with the File/Edit/View menu, left symbol palette, and white grid-paper canvas; the geographic Map Editor is the wrong application mode.",
-            "In the initial Device dialog, click Create New Diagram exactly once to open a new untitled schematic; never choose Open Existing Diagram. If Create New Diagram does not produce the schematic menu, symbol palette, and grid-paper canvas, stop and report SCHEMATIC_EDITOR_UNAVAILABLE. Never scroll while the Device dialog is open.",
+            "Dismiss the initial Device overlay without choosing Create New Diagram or Open Existing Diagram because both invoke native file pickers that the hosted browser cannot complete. Click the overlay's visible X once and observe; if it remains, press Escape once and observe; if it still remains, click once on the dimmed area outside the overlay and observe. Never repeat these attempts, never scroll while the Device overlay is open, and report DEVICE_DIALOG_UNAVAILABLE if the schematic canvas is still blocked.",
             "Never click the green Map button in the lower-left corner. Never use the Map Editor, its geographic map, its Sources buttons, node counter, cable counter, or Draw Cable control. If a screen says Map Editor or shows geographic map tiles, place nothing: use browser Back once or reopen https://app.electrisim.com/ once, then require the schematic menu, symbol palette, and grid-paper canvas before continuing; otherwise report SCHEMATIC_EDITOR_UNAVAILABLE.",
             "Reproduce this exact left-to-right single-line topology and use no substitute symbols: Generator (~) from Source, the first leftmost Transformer symbol under Transformers, two separate copies of External Grid (the square X symbol), then Motor (M) under Rotating Equipment.",
             "The two External Grid blocks shown between Transformer and Motor are mandatory. Do not use the second Transformer symbol, Load, Impedance, or a generic shape in their place.",
@@ -75,7 +75,7 @@ def build_electrisim_prompt() -> str:
 def electrisim_demo_metadata() -> dict[str, object]:
     """Return stable requested checkpoints without claiming that H completed them."""
     return {
-        "id": "electrisim-public-unsaved-single-line-v5",
+        "id": "electrisim-public-unsaved-single-line-v6",
         "target": "https://app.electrisim.com/",
         "allowedOrigins": ["https://app.electrisim.com"],
         "mode": "public-unsaved-draw",
