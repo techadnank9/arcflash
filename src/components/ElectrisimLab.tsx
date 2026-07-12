@@ -53,13 +53,13 @@ const DEMO_CHECKPOINTS = [
   {
     id: 'line-placed',
     label: 'Draw the Line below Bus',
-    detail: 'Drag exactly one Line into the editor and leave it unconnected.',
+    detail: 'Press and hold Line, move right below Simulate, then release on the grid.',
     match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,80}(?:one )?line|line[^.]{0,50}(?:drag|drop|place)/i,
   },
   {
     id: 'source-placed',
     label: 'Draw Generator (~) below Source',
-    detail: 'Drag exactly one Generator into the editor and leave it unconnected.',
+    detail: 'Press and hold Generator, move right below Simulate, then release beside Line.',
     match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,100}(?:generator|tilde|~)|(?:generator|tilde)[^.]{0,60}(?:drag|drop|place)/i,
   },
   {
@@ -445,7 +445,8 @@ export function ElectrisimLab() {
             <h2>No-login drawing request</h2>
             <p>The server asks H to draw only on a fresh, blank diagram and supplies no credentials or arbitrary user URL. This remains an agent instruction, not a network allowlist inside H's hosted browser.</p>
             <dl>
-              <div><dt>Requested edit</dt><dd>Line below Bus and Generator (~) below Source</dd></div>
+              <div><dt>Requested edit</dt><dd>Drag Line and Generator right, below Simulate</dd></div>
+              <div><dt>Gesture</dt><dd>Press, hold, move onto grid, then release</dd></div>
               <div><dt>Requested exclusions</dt><dd>Simulation, login, payment, upload, save, storage</dd></div>
               <div><dt>Dialog rule</dt><dd>Close Device; do not choose Create or Open</dd></div>
               <div><dt>Stop rule</dt><dd>Stop after both unconnected items are confirmed</dd></div>
