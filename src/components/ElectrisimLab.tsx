@@ -45,22 +45,28 @@ const DEMO_CHECKPOINTS = [
     match: /clos(?:e|ed|ing)[^.]{0,60}device dialog|device dialog[^.]{0,60}clos(?:e|ed|ing)|dismiss(?:ed)?[^.]{0,60}device dialog/i,
   },
   {
-    id: 'bus-palette',
-    label: 'Locate the Bus palette item',
-    detail: 'Find Bus in the component palette on the blank diagram.',
-    match: /bus (?:item|symbol|component|palette)|component palette|palette.*bus/i,
+    id: 'palette-items',
+    label: 'Locate Line and Generator ~',
+    detail: 'Use only the Line below Bus and Generator (~) below Source.',
+    match: /palette[^.]{0,120}line[^.]{0,120}(?:generator|source|tilde|~)|line[^.]{0,80}(?:generator|source|tilde|~)[^.]{0,80}palette/i,
   },
   {
-    id: 'bus-placed',
-    label: 'Draw one unsaved Bus',
-    detail: 'Drag exactly one Bus onto the blank canvas and leave it unconnected.',
-    match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,80}(?:new )?bus|bus[^.]{0,50}(?:drag|drop|place)/i,
+    id: 'line-placed',
+    label: 'Draw the Line below Bus',
+    detail: 'Drag exactly one Line into the editor and leave it unconnected.',
+    match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,80}(?:one )?line|line[^.]{0,50}(?:drag|drop|place)/i,
+  },
+  {
+    id: 'source-placed',
+    label: 'Draw Generator (~) below Source',
+    detail: 'Drag exactly one Generator into the editor and leave it unconnected.',
+    match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,100}(?:generator|tilde|~)|(?:generator|tilde)[^.]{0,60}(?:drag|drop|place)/i,
   },
   {
     id: 'visual-confirmation',
-    label: 'Confirm the new Bus on canvas',
-    detail: 'Visually verify the added Bus before ending the session.',
-    match: /new (?:unconnected )?bus[^.]{0,80}(?:visible|appear|canvas|confirm)|(?:visible|confirm)[^.]{0,80}new (?:unconnected )?bus/i,
+    label: 'Confirm both items on canvas',
+    detail: 'Visually verify the Line and Generator (~) before ending the session.',
+    match: /line[^.]{0,100}(?:generator|tilde|~)[^.]{0,100}(?:visible|canvas|confirm)|(?:visible|confirm)[^.]{0,100}line[^.]{0,100}(?:generator|tilde|~)/i,
     requiresObservation: true,
   },
   {
@@ -424,7 +430,7 @@ export function ElectrisimLab() {
           <div>
             <span>REAL THIRD-PARTY EDITOR · UNSAVED DEMO</span>
             <h1>Electrisim public drawing lab</h1>
-            <p>Watch H close the Device dialog, draw one Bus on the exposed canvas, and stop without saving or simulating.</p>
+            <p>Watch H close the Device dialog, drag Line under Bus and Generator (~) under Source into the editor, and stop without connecting, saving, or simulating.</p>
           </div>
           <div className={`electrisim-state is-${currentStatus.tone}`} data-testid="electrisim-session-state" aria-live="polite">
             <i />
@@ -439,10 +445,10 @@ export function ElectrisimLab() {
             <h2>No-login drawing request</h2>
             <p>The server asks H to draw only on a fresh, blank diagram and supplies no credentials or arbitrary user URL. This remains an agent instruction, not a network allowlist inside H's hosted browser.</p>
             <dl>
-              <div><dt>Requested edit</dt><dd>One Bus on the canvas behind the Device dialog</dd></div>
+              <div><dt>Requested edit</dt><dd>Line below Bus and Generator (~) below Source</dd></div>
               <div><dt>Requested exclusions</dt><dd>Simulation, login, payment, upload, save, storage</dd></div>
               <div><dt>Dialog rule</dt><dd>Close Device; do not choose Create or Open</dd></div>
-              <div><dt>Stop rule</dt><dd>Stop after the new Bus is visibly confirmed</dd></div>
+              <div><dt>Stop rule</dt><dd>Stop after both unconnected items are confirmed</dd></div>
             </dl>
             <div className="electrisim-safety-note"><Check size={13} /><span>The independent calculation below never uses values scraped from the website.</span></div>
           </aside>

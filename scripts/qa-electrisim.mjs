@@ -42,9 +42,10 @@ const completedSession = () => ({
     checkpoints: [
       'Opened the public Electrisim editor',
       'Closed the Device dialog without choosing Create New Diagram or Open Existing Diagram',
-      'Located the Bus palette item',
-      'Drew one unconnected Bus on the blank canvas',
-      'Visually confirmed the Bus on canvas',
+      'Located Line below Bus and Generator ~ below Source in the component palette',
+      'Drew the Line directly below Bus as an unconnected item',
+      'Drew Generator ~ directly below Source as an unconnected item',
+      'Visually confirmed the Line and Generator ~ on canvas',
       'Stopped without saving or simulation',
     ],
   },
@@ -184,7 +185,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'The Device dialog is closed. A fresh blank diagram is visible and the Bus component palette is available.',
+            text: 'The Device dialog is closed. The component palette shows Line directly below the Bus header and Generator ~ directly below the Source header.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -193,30 +194,39 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:04Z',
           data: {
             kind: 'policy_event',
-            content: 'Draw exactly one Bus on the blank canvas without connecting it.',
-            tool_reqs: [{ id: 'tool-2', tool_name: 'drag', args: { target: 'Bus palette item to an empty area of the canvas' } }],
+            content: 'Drag the Line directly below Bus into the editor without connecting it.',
+            tool_reqs: [{ id: 'tool-2', tool_name: 'drag', args: { target: 'Line directly below Bus to an empty canvas area' } }],
           },
         },
         {
           type: 'AgentEvent',
           timestamp: '2026-07-11T12:00:05Z',
           data: {
+            kind: 'policy_event',
+            content: 'Drag Generator ~ directly below Source into the editor without connecting it.',
+            tool_reqs: [{ id: 'tool-3', tool_name: 'drag', args: { target: 'Generator ~ directly below Source to an empty canvas area' } }],
+          },
+        },
+        {
+          type: 'AgentEvent',
+          timestamp: '2026-07-11T12:00:06Z',
+          data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'A new unconnected Bus is visible on the otherwise blank canvas. The diagram remains unsaved and no simulation ran.',
+            text: 'The Line and Generator ~ are visible as two separate unconnected items on the canvas. The diagram remains unsaved and no simulation ran.',
             image: { source: screenshotSource, type: 'url', media_type: 'image/png' },
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
       ],
-      next_index: 5,
+      next_index: 6,
       status: 'running',
     } : {
       new_events: [],
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Closed the Device dialog, placed one new unconnected Bus on the exposed canvas, confirmed it was visible, and stopped without saving or running a simulation.'
+        ? 'Closed the Device dialog, placed the Line below Bus and Generator ~ below Source as two unconnected items, confirmed both were visible, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;
@@ -280,7 +290,8 @@ try {
   await lab.getByText('Browser observation', { exact: true }).first().waitFor();
   await lab.getByText('Browser action', { exact: true }).first().waitFor();
   await lab.getByText(/Device dialog is closed/i).waitFor();
-  await lab.getByText(/drag.*Bus palette item/i).waitFor();
+  await lab.getByText(/drag.*Line directly below Bus/i).waitFor();
+  await lab.getByText(/drag.*Generator.*directly below Source/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
   assert.deepEqual(directScreenshotRequests, [], 'The browser must not fetch credentialed H resources directly.');
@@ -292,12 +303,12 @@ try {
   await lab.getByRole('button', { name: 'Reset lab' }).click();
   await lab.getByRole('button', { name: 'Start public drawing demo' }).click();
   await lab.getByTestId('electrisim-session-state').getByText(/completed/i).waitFor({ timeout: 15_000 });
-  await lab.getByText(/placed one new unconnected Bus.*stopped without saving/i).waitFor({ timeout: 5_000 });
+  await lab.getByText(/placed the Line below Bus and Generator.*stopped without saving/i).waitFor({ timeout: 5_000 });
   assert.equal(sessionStarts, 2, 'Reset should allow a second independent session.');
   assert.ok(sessionReads > 0, 'The lab must poll its dedicated session endpoint.');
   const checkpoints = lab.getByTestId('electrisim-checkpoints');
   await checkpoints.waitFor();
-  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 6, 'Every drawing checkpoint must have matching H evidence.');
+  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 7, 'Every drawing checkpoint must have matching H evidence.');
 
   await lab.getByRole('button', { name: 'Run independent CV-104 validation' }).click();
   const calculation = lab.getByTestId('electrisim-calculation');

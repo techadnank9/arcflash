@@ -208,10 +208,11 @@ Open CV-104 → Verify Study Case A → Open Arc Flash
 The separate Electrisim lab sends H a fixed task requesting only the public
 `app.electrisim.com` origin. This is an agent instruction, not a network allowlist
 inside H's hosted browser. The task closes the initial Device dialog without
-choosing Create New Diagram or Open Existing Diagram, then drags exactly one
-standalone Bus onto the canvas already behind it, visually confirms it, and
-stops. It never opens the template selector or native file picker.
-That single in-memory placement is the only permitted edit: H must not connect or configure the Bus, modify an
+choosing Create New Diagram or Open Existing Diagram, then drags the Line
+directly below the Bus header and Generator (`~`) directly below the Source
+header onto the canvas already behind it, visually confirms both, and stops. It
+never opens the template selector or native file picker. Those two unconnected
+in-memory placements are the only permitted edits: H must not configure them, modify an
 existing element, simulate, save, export, download, upload, import, share, open
 an existing project, sign in, or connect storage. It shares the API's
 one-active-H-session guard with the original workflow, but does not write to

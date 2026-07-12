@@ -199,11 +199,18 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
         "checkpoints": [
             {"id": "editor", "label": "Open the public Electrisim editor"},
             {"id": "device-dialog-closed", "label": "Close the Device dialog"},
-            {"id": "bus-palette", "label": "Locate Bus in the component palette"},
-            {"id": "bus-placed", "label": "Draw exactly one standalone Bus"},
+            {
+                "id": "palette-items",
+                "label": "Locate Line under Bus and Generator ~ under Source",
+            },
+            {"id": "line-placed", "label": "Draw the Line directly below Bus"},
+            {
+                "id": "source-placed",
+                "label": "Draw Generator (~) directly below Source",
+            },
             {
                 "id": "visual-confirmation",
-                "label": "Visually confirm the new Bus on the canvas",
+                "label": "Visually confirm Line and Generator on the canvas",
             },
             {
                 "id": "safe-stop",
@@ -218,14 +225,19 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "without choosing either Create New Diagram or Open Existing Diagram" in gateway.prompt
     assert "Do not open the diagram selection dialog" in gateway.prompt
     assert "canvas already behind it" in gateway.prompt
-    assert "drag exactly one Bus" in gateway.prompt
+    assert "do not drag the Bus header" in gateway.prompt
+    assert "Line item directly below Bus" in gateway.prompt
+    assert "drag exactly one Line" in gateway.prompt
+    assert "Generator, shown as a tilde (~) symbol directly below Source" in gateway.prompt
+    assert "do not drag the Source header" in gateway.prompt
+    assert "two separate unconnected items" in gateway.prompt
     assert "do not select any category, example, or template" in gateway.prompt
     assert "Simple Example" not in gateway.prompt
     assert "click Create" in gateway.prompt
-    assert "do not place a second element" in gateway.prompt
+    assert "do not place any other element" in gateway.prompt
     assert "Do not open or use Simulate" in gateway.prompt
-    assert "only claim the Bus was placed if you visually confirmed it" in gateway.prompt
-    assert "never claim that it was connected, saved, or simulated" in gateway.prompt
+    assert "only claim an item was placed if you visually confirmed it" in gateway.prompt
+    assert "never claim that the items were connected, saved, or simulated" in gateway.prompt
     with pytest.raises(ServiceError) as active:
         await service.create()
     assert active.value.code == "HCOMPUTER_SESSION_ACTIVE"
