@@ -221,7 +221,9 @@ ArcFlash evidence or reports.
 Each placement requires H's atomic `drag_web` action from the palette symbol to
 the grid below Simulate. `click_web`, `move_mouse_web`, click-to-select, and
 separate mouse calls are explicitly prohibited because they do not preserve the
-held mouse button across tool calls.
+held mouse button across tool calls. The fixed prompt prioritizes both drag
+calls before narration or intermediate summaries to preserve H's execution
+budget, then performs one final visual confirmation.
 
 Electrisim `POST` and `DELETE` requests require
 `X-ArcFlash-Demo: electrisim-public-v1`. This non-secret custom header is a

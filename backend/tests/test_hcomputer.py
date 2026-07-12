@@ -221,29 +221,24 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "Open https://app.electrisim.com/ directly" in gateway.prompt
     assert "only visit app.electrisim.com over HTTPS" in gateway.prompt
     assert "Do not sign in" in gateway.prompt
-    assert "close it exactly once using its X or Close control" in gateway.prompt
-    assert "without choosing either Create New Diagram or Open Existing Diagram" in gateway.prompt
-    assert "Do not open the diagram selection dialog" in gateway.prompt
-    assert "canvas already behind it" in gateway.prompt
+    assert "without narrating, summarizing, or planning between them" in gateway.prompt
+    assert "close the initial Device dialog with X" in gateway.prompt
+    assert "without choosing Create New Diagram or Open Existing Diagram" in gateway.prompt
     assert "do not drag the Bus header" in gateway.prompt
-    assert "horizontal gray Line item directly below the Bus header" in gateway.prompt
-    assert "single atomic drag_web tool" in gateway.prompt
+    assert "horizontal gray Line directly below the Bus header" in gateway.prompt
+    assert "call the atomic drag_web tool once from its center" in gateway.prompt
+    assert "Generator (~) directly below the Source header" in gateway.prompt
+    assert "call atomic drag_web once from its center" in gateway.prompt
+    assert "below Simulate beside Line" in gateway.prompt
+    assert "mandatory before any final response" in gateway.prompt
     assert "do not use click_web, move_mouse_web" in gateway.prompt
-    assert "Call drag_web once from the center of the Line item" in gateway.prompt
-    assert "repeat drag_web exactly once" in gateway.prompt
-    assert "Generator, shown as a tilde (~) directly below the Source header" in gateway.prompt
-    assert "call drag_web from its center" in gateway.prompt
-    assert "below Simulate beside but not overlapping Line" in gateway.prompt
+    assert "do not stop before both drag_web calls have executed" in gateway.prompt
     assert "report DRAW_TOOL_UNAVAILABLE" in gateway.prompt
     assert "do not drag the Source header" in gateway.prompt
     assert "two separate unconnected items" in gateway.prompt
-    assert "do not select any category, example, or template" in gateway.prompt
     assert "Simple Example" not in gateway.prompt
-    assert "click Create" in gateway.prompt
-    assert "do not place any other element" in gateway.prompt
-    assert "Do not open or use Simulate" in gateway.prompt
-    assert "only claim an item was placed if you visually confirmed it" in gateway.prompt
-    assert "never claim that the items were connected, saved, or simulated" in gateway.prompt
+    assert "Do not sign in, pay, open or create a diagram" in gateway.prompt
+    assert "only claim a placement that the final observation confirms" in gateway.prompt
     with pytest.raises(ServiceError) as active:
         await service.create()
     assert active.value.code == "HCOMPUTER_SESSION_ACTIVE"
