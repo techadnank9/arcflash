@@ -22,6 +22,7 @@ import { ApprovalDialog } from './components/ApprovalDialog';
 import { AuditDrawer } from './components/AuditDrawer';
 import { EvidenceRail } from './components/EvidenceRail';
 import { EditEvidenceDialog, type EvidenceEdits } from './components/EditEvidenceDialog';
+import { ElectrisimLab } from './components/ElectrisimLab';
 import { NetworkDiagram } from './components/NetworkDiagram';
 import { OperatorWorkbench } from './components/OperatorWorkbench';
 import { ReportPreview } from './components/ReportPreview';
@@ -245,6 +246,7 @@ function GlobalHeader({ phase, hStatus, nemoStatus, runtimeChecked, onAudit, onR
         ))}
       </div>
       <div className="header-actions">
+        <a className="header-lab-link" href="/labs/electrisim" aria-label="Open Electrisim public browser lab"><Bot size={12} /><span>ELECTRISIM LAB</span></a>
         <div className={`secure-state ${runtimeClass}`}>{nemoClawEnforced(nemoStatus) ? <ShieldCheck size={12} /> : <Code2 size={12} />}<span>{runtimeLabel}</span></div>
         <button className="icon-button" onClick={onAudit} aria-label="Open audit trail"><History size={17} /></button>
         <button className="icon-button reset-button" onClick={onReset} aria-label="Reset demo"><RefreshCw size={16} /></button>
@@ -530,6 +532,7 @@ function ReviewInspector({ phase, evidence, review, onApprove, onExport, onAudit
 }
 
 export default function App() {
+  if (window.location.pathname.startsWith('/labs/electrisim')) return <ElectrisimLab />;
   if (window.location.pathname.startsWith('/study')) return <OperatorWorkbench />;
 
   const [phase, setPhase] = useState<AppPhase>('home');

@@ -4,10 +4,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
+from .calculations import CV104CalculationService
 from .errors import ServiceError
 from .gradium import (
     MAX_AUDIO_BYTES,
@@ -20,16 +22,36 @@ from .nemoclaw import NemoClawRuntime
 from .settings import Settings, get_settings
 
 
+class ScreenshotRequest(BaseModel):
+    source: str = Field(min_length=1, max_length=2048)
+
+
+ELECTRISIM_DEMO_HEADER = "electrisim-public-v1"
+
+
+def require_electrisim_demo_header(
+    value: Annotated[str | None, Header(alias="X-ArcFlash-Demo")] = None,
+) -> None:
+    if value != ELECTRISIM_DEMO_HEADER:
+        raise ServiceError(
+            403,
+            "ELECTRISIM_DEMO_HEADER_REQUIRED",
+            "This Electrisim demo request requires the same-origin demo header.",
+        )
+
+
 def create_app(
     settings: Settings | None = None,
     runtime: NemoClawRuntime | None = None,
     service: HComputerService | None = None,
     gradium_service: GradiumService | None = None,
+    calculation_service: CV104CalculationService | None = None,
 ) -> FastAPI:
     current_settings = settings or get_settings()
     current_runtime = runtime or NemoClawRuntime(current_settings)
     current_service = service or HComputerService(current_settings, current_runtime)
     current_gradium = gradium_service or GradiumService(current_settings)
+    current_calculations = calculation_service or CV104CalculationService()
 
     api = FastAPI(
         title="ArcFlash Copilot API",
@@ -41,6 +63,7 @@ def create_app(
     api.state.nemoclaw = current_runtime
     api.state.hcomputer = current_service
     api.state.gradium = current_gradium
+    api.state.cv104_calculations = current_calculations
 
     @api.exception_handler(ServiceError)
     async def handle_service_error(_request: Request, error: ServiceError) -> JSONResponse:
@@ -104,6 +127,71 @@ def create_app(
     async def cancel_hcomputer_session(session_id: str) -> object:
         return await current_service.cancel(session_id)
 
+    @api.post("/api/electrisim/sessions", status_code=201)
+    async def create_electrisim_session(
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> object:
+        return await current_service.create_electrisim()
+
+    @api.get("/api/electrisim/sessions/{session_id}")
+    async def get_electrisim_session(session_id: str) -> object:
+        return await current_service.get_electrisim(session_id)
+
+    @api.get("/api/electrisim/sessions/{session_id}/changes")
+    async def get_electrisim_changes(
+        session_id: str,
+        from_index: Annotated[int, Query(ge=0)] = 0,
+        wait_for_seconds: Annotated[int, Query(ge=0, le=25)] = 1,
+    ) -> object:
+        return await current_service.changes_electrisim(
+            session_id, from_index, wait_for_seconds
+        )
+
+    @api.post("/api/electrisim/sessions/{session_id}/pause")
+    async def pause_electrisim_session(
+        session_id: str,
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> object:
+        return await current_service.pause_electrisim(session_id)
+
+    @api.post("/api/electrisim/sessions/{session_id}/resume")
+    async def resume_electrisim_session(
+        session_id: str,
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> object:
+        return await current_service.resume_electrisim(session_id)
+
+    @api.delete("/api/electrisim/sessions/{session_id}")
+    async def cancel_electrisim_session(
+        session_id: str,
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> object:
+        return await current_service.cancel_electrisim(session_id)
+
+    @api.post("/api/electrisim/sessions/{session_id}/screenshots")
+    async def get_electrisim_screenshot(
+        session_id: str,
+        request: ScreenshotRequest,
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> Response:
+        content, media_type = await current_service.screenshot_electrisim(
+            session_id, request.source
+        )
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
+
+    @api.post("/api/electrisim/calculations/cv104")
+    async def calculate_electrisim_cv104(
+        _demo: Annotated[None, Depends(require_electrisim_demo_header)],
+    ) -> dict[str, object]:
+        return await current_calculations.calculate()
+
     _mount_frontend(api)
     return api
 
@@ -154,7 +242,7 @@ def _mount_frontend(api: FastAPI) -> None:
         requested = (dist / frontend_path).resolve()
         if requested.is_relative_to(dist.resolve()) and requested.is_file():
             return FileResponse(requested)
-        if frontend_path.rstrip("/") in {"", "study"}:
+        if frontend_path.rstrip("/") in {"", "study", "labs/electrisim"}:
             return FileResponse(dist / "index.html")
         raise HTTPException(status_code=404, detail="Page not found.")
 

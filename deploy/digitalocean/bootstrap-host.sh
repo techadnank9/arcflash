@@ -88,7 +88,7 @@ ln -sfn /opt/arcflash-tools/bin/uv /usr/local/bin/uv
 cd "${APP_DIR}"
 run_as_arcflash npm ci
 run_as_arcflash npm run build
-run_as_arcflash /usr/local/bin/uv sync --frozen
+run_as_arcflash /usr/local/bin/uv sync --frozen --extra study
 
 install -d -m 0750 -o root -g "${APP_GROUP}" "${CONFIG_DIR}"
 if [[ ! -f "${CONFIG_DIR}/arcflash.env" ]]; then

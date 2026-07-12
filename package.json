@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",
     "qa:flow": "node scripts/qa-flow.mjs",
+    "qa:electrisim": "node scripts/qa-electrisim.mjs",
     "engine:generate": "uv run python engine/generate_cv104_study.py",
     "setup:nemoclaw": "uv run python scripts/bootstrap_nemoclaw.py"
   },

@@ -30,8 +30,9 @@ sudo env ARCFLASH_DOMAIN=arcflash.example.com HAI_REGION=eu \
 ```
 
 The script installs Docker, Caddy, Node 22, Python tooling, and `uv`; creates an
-unprivileged `arcflash` account; builds the frontend and Python environment; and
-starts both services. It does not install NemoClaw or accept NVIDIA's
+unprivileged `arcflash` account; builds the frontend and Python environment
+with the fixed pandapower/arcflash-calc study engines; and starts both services.
+It does not install NemoClaw or accept NVIDIA's
 third-party software notice on the user's behalf.
 
 Use `/etc/arcflash/arcflash.env` for service settings and the server-side
@@ -99,6 +100,11 @@ sudo systemctl restart arcflash
 For a later H-key rotation, repeat the command with `--replace-credential`.
 Make sure the `--region` value matches `HAI_REGION` in
 `/etc/arcflash/arcflash.env`.
+
+Rerun the same setup command after pulling policy or worker changes. It compares
+the checked-in REST rules with the applied named policy and safely replaces a
+stale preset before rebuilding and uploading the worker; no credential export
+is needed when the existing provider remains attached.
 
 ## 4. Verify
 

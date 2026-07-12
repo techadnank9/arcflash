@@ -17,6 +17,13 @@ network_policies:
           - allow: { method: POST, path: "/api/v2/sessions/*/pause" }
           - allow: { method: POST, path: "/api/v2/sessions/*/resume" }
           - allow: { method: DELETE, path: "/api/v2/sessions/*" }
+          - allow: { method: GET, path: "/api/v1/trajectories/*/resources/*/*/*" }
+      - host: production-agentplatformb-screenshotbucketv2f6e481-kjfhukx6imoq.s3.amazonaws.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/*/*" }
     binaries:
       - { path: "/usr/bin/python3*" }
       - { path: "/usr/local/bin/python3*" }

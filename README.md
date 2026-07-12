@@ -19,6 +19,7 @@ This hackathon MVP is not an arc-flash calculation engine, compliance checker, o
 - Missing `MCC-01` clearing time stored as `null` and flagged for engineer review
 - Seven-section report preview, audit trail, approval gate, and watermarked PDF export
 - Open-source comparison adapter using pandapower and `LiaungYip/arcflash`
+- Separate `/labs/electrisim` public-browser demo with no-login safety boundaries
 
 ## Monorepo layout
 
@@ -146,9 +147,16 @@ The checked-in presets allow the Python executable to use only:
 - `POST /api/v2/sessions/*/pause`
 - `POST /api/v2/sessions/*/resume`
 - `DELETE /api/v2/sessions/*`
+- `GET /api/v1/trajectories/*/resources/*/*/*` for authenticated, session-scoped browser frames
 - the selected EU or US H hostname on port `443`
+- `GET /*/*` on the exact H screenshot S3 bucket hostname for the single presigned frame hop
 
 `protocol: rest` lets OpenShell enforce method/path rules and replace the credential placeholder at the proxy. The API key is never placed in a browser bundle, task payload, subprocess argv, report, or API status response.
+The frame proxy accepts only H's exact production screenshot bucket, matching
+session ID, and PNG filename. It then accepts one HTTPS `302` to the same exact
+S3 bucket/session/file with a complete AWS SigV4 query. The second request never
+contains H's `Authorization` header, further redirects are rejected, and the PNG
+body is capped at 5 MiB.
 
 If the CLI, sandbox, policy, provider, or worker is missing, `/api/hcomputer/sessions` returns a structured `503` and the UI continues with a clearly labeled local replay.
 
@@ -179,6 +187,14 @@ This path uses the official open-source `hai-agents` Python SDK and is visibly l
 | `POST /api/hcomputer/sessions/{id}/pause` | Pause the hosted H session and local replay together |
 | `POST /api/hcomputer/sessions/{id}/resume` | Resume both execution layers |
 | `DELETE /api/hcomputer/sessions/{id}` | Cancel the hosted session before stop/reset |
+| `POST /api/electrisim/sessions` | Start the fixed, no-login public Electrisim browser demo |
+| `GET /api/electrisim/sessions/{id}` | Read the Electrisim demo session snapshot |
+| `GET /api/electrisim/sessions/{id}/changes` | Read actual H browser events and observations |
+| `POST /api/electrisim/sessions/{id}/pause` | Pause the Electrisim demo session |
+| `POST /api/electrisim/sessions/{id}/resume` | Resume the Electrisim demo session |
+| `DELETE /api/electrisim/sessions/{id}` | Cancel the Electrisim demo session |
+| `POST /api/electrisim/sessions/{id}/screenshots` | Proxy one strictly validated H observation PNG without exposing the H credential |
+| `POST /api/electrisim/calculations/cv104` | Run the independent fixed pandapower/arcflash-calc comparison |
 | `GET /api/docs` | FastAPI OpenAPI UI |
 
 H receives a constrained task for the stable target:
@@ -188,6 +204,21 @@ Open CV-104 → Verify Study Case A → Open Arc Flash
 → Capture SWGR-01 → Flag + capture MCC-01 → Capture CV-104
 → Generate draft → Stop at engineer review
 ```
+
+The separate Electrisim lab sends H a fixed task requesting only the public
+`electrisim.com` and `app.electrisim.com` origins. This is an agent instruction,
+not a network allowlist inside H's hosted browser. The task inspects public documentation,
+opens the public editor, selects the built-in `Basic → Simple Example` when
+available, inspects the Simulate menu, and stops before login, subscription,
+calculation, saving, or diagram edits. It shares the API's one-active-H-session
+guard with the original workflow, but does not write to ArcFlash evidence or
+reports.
+
+Electrisim `POST` and `DELETE` requests require
+`X-ArcFlash-Demo: electrisim-public-v1`. This non-secret custom header is a
+same-origin CSRF boundary, not authentication. Successful H starts have a
+five-minute process-wide cooldown, and completed open-source calculations have
+a 15-second cooldown, with stable `429` responses reporting the retry delay.
 
 ## Open-source study adapter
 

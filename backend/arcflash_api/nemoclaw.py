@@ -16,6 +16,10 @@ from .settings import Settings
 
 RESULT_MARKER = "ARCFLASH_JSON:"
 PROBE_MARKER = "ARCFLASH_PROBE:"
+MAX_WORKER_STDOUT_BYTES = 7 * 1024 * 1024
+SCREENSHOT_BUCKET_HOST = (
+    "production-agentplatformb-screenshotbucketv2f6e481-kjfhukx6imoq.s3.amazonaws.com"
+)
 
 
 @dataclass(slots=True)
@@ -47,7 +51,7 @@ class SubprocessRunner:
             raise
         return CommandResult(
             returncode=process.returncode or 0,
-            stdout=stdout.decode("utf-8", errors="replace")[-100_000:],
+            stdout=stdout.decode("utf-8", errors="replace")[-MAX_WORKER_STDOUT_BYTES:],
             stderr=stderr.decode("utf-8", errors="replace")[-20_000:],
         )
 
@@ -192,8 +196,10 @@ class NemoClawRuntime:
             and policy_result.returncode == 0
             and "source unverified" not in policy_result.stdout.lower()
             and isinstance(policy_get_result, CommandResult)
-            and _effective_policy_has_name(
-                policy_get_result, self.settings.nemoclaw_policy_name
+            and _effective_policy_has_required_rules(
+                policy_get_result,
+                self.settings.nemoclaw_policy_name,
+                self.settings.h_api_host,
             )
         )
         provider_attached = isinstance(credential_result, CommandResult) and (
@@ -240,7 +246,15 @@ class NemoClawRuntime:
         )
 
     async def invoke(self, action: str, payload: dict[str, Any]) -> Any:
-        if action not in {"create", "get", "changes", "pause", "resume", "cancel"}:
+        if action not in {
+            "create",
+            "get",
+            "changes",
+            "pause",
+            "resume",
+            "cancel",
+            "screenshot",
+        }:
             raise ValueError(f"Unsupported sandbox action: {action}")
         state = await self.status()
         if not state.ready or not self.executable:
@@ -330,7 +344,9 @@ def _sandbox_phase(result: CommandResult) -> tuple[str, bool]:
     return phase, found
 
 
-def _effective_policy_has_name(result: CommandResult, expected: str) -> bool:
+def _effective_policy_has_required_rules(
+    result: CommandResult, expected: str, expected_host: str
+) -> bool:
     if result.returncode != 0:
         return False
     try:
@@ -342,10 +358,74 @@ def _effective_policy_has_name(result: CommandResult, expected: str) -> bool:
     policies = payload.get("network_policies")
     if not isinstance(policies, dict):
         return False
-    for policy in policies.values():
-        if isinstance(policy, dict) and policy.get("name") == expected:
-            return True
-    return False
+    required_h_rules = {
+        ("POST", "/api/v2/sessions"),
+        ("GET", "/api/v2/sessions/*"),
+        ("GET", "/api/v2/sessions/*/changes"),
+        ("POST", "/api/v2/sessions/*/pause"),
+        ("POST", "/api/v2/sessions/*/resume"),
+        ("DELETE", "/api/v2/sessions/*"),
+        ("GET", "/api/v1/trajectories/*/resources/*/*/*"),
+    }
+    required_s3_rules = {("GET", "/*/*")}
+    required_binaries = {"/usr/bin/python3*", "/usr/local/bin/python3*"}
+    matches = [
+        policy
+        for policy in policies.values()
+        if isinstance(policy, dict) and policy.get("name") == expected
+    ]
+    if len(matches) != 1:
+        return False
+    policy = matches[0]
+    if set(policy) != {"name", "endpoints", "binaries"}:
+        return False
+    binaries = policy.get("binaries")
+    if not isinstance(binaries, list) or len(binaries) != len(required_binaries):
+        return False
+    if any(not isinstance(binary, dict) or set(binary) != {"path"} for binary in binaries):
+        return False
+    binary_paths = {binary["path"] for binary in binaries}
+    if binary_paths != required_binaries:
+        return False
+    endpoints = policy.get("endpoints")
+    if not isinstance(endpoints, list) or len(endpoints) != 2:
+        return False
+    by_host: dict[str, dict[str, Any]] = {}
+    for endpoint in endpoints:
+        if not isinstance(endpoint, dict) or not isinstance(endpoint.get("host"), str):
+            return False
+        host = endpoint["host"]
+        if host in by_host:
+            return False
+        by_host[host] = endpoint
+    if set(by_host) != {expected_host, SCREENSHOT_BUCKET_HOST}:
+        return False
+    return _endpoint_is_exact(by_host[expected_host], required_h_rules) and _endpoint_is_exact(
+        by_host[SCREENSHOT_BUCKET_HOST], required_s3_rules
+    )
+
+
+def _endpoint_is_exact(
+    endpoint: dict[str, Any], required_rules: set[tuple[str, str]]
+) -> bool:
+    if (
+        set(endpoint) != {"host", "port", "protocol", "enforcement", "rules"}
+        or endpoint.get("port") != 443
+        or endpoint.get("protocol") != "rest"
+        or endpoint.get("enforcement") != "enforce"
+        or not isinstance(endpoint.get("rules"), list)
+        or len(endpoint["rules"]) != len(required_rules)
+    ):
+        return False
+    allowed: set[tuple[object, object]] = set()
+    for rule in endpoint["rules"]:
+        if not isinstance(rule, dict) or set(rule) != {"allow"}:
+            return False
+        allow = rule.get("allow")
+        if not isinstance(allow, dict) or set(allow) != {"method", "path"}:
+            return False
+        allowed.add((allow.get("method"), allow.get("path")))
+    return allowed == required_rules
 
 
 def _credential_list_has_name(output: str, expected: str) -> bool:

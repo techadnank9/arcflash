@@ -115,20 +115,93 @@ def valid_name(value: str) -> bool:
 
 
 def effective_policy_names(policy_text: str) -> set[str]:
-    try:
-        payload = yaml.safe_load(policy_text)
-    except yaml.YAMLError:
-        return set()
-    if not isinstance(payload, dict):
-        return set()
-    policies = payload.get("network_policies")
-    if not isinstance(policies, dict):
+    policies = _network_policies(policy_text)
+    if policies is None:
         return set()
     names: set[str] = set()
     for policy in policies.values():
         if isinstance(policy, dict) and isinstance(policy.get("name"), str):
             names.add(policy["name"])
     return names
+
+
+def _network_policies(policy_text: str) -> dict[str, object] | None:
+    try:
+        payload = yaml.safe_load(policy_text)
+    except yaml.YAMLError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    policies = payload.get("network_policies")
+    if not isinstance(policies, dict):
+        return None
+    return policies
+
+
+def named_policy_shape(policy_text: str, policy_name: str) -> str | None:
+    """Canonicalize the complete named policy while ignoring unrelated policies."""
+    policies = _network_policies(policy_text)
+    if policies is None:
+        return None
+    matches = [
+        policy
+        for policy in policies.values()
+        if isinstance(policy, dict) and policy.get("name") == policy_name
+    ]
+    if len(matches) != 1:
+        return None
+    try:
+        return _canonical_yaml(matches[0])
+    except (TypeError, ValueError):
+        return None
+
+
+def _canonical_yaml(value: object) -> str:
+    return json.dumps(
+        _normalize_policy_value(value),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _normalize_policy_value(value: object, path: tuple[str, ...] = ()) -> object:
+    if isinstance(value, dict):
+        return {
+            str(key): _normalize_policy_value(nested, (*path, str(key)))
+            for key, nested in sorted(value.items(), key=lambda item: str(item[0]))
+        }
+    if isinstance(value, list):
+        normalized = [_normalize_policy_value(item, path) for item in value]
+        if path and path[-1] in {"endpoints", "rules", "binaries", "allowed_ips"}:
+            return sorted(
+                normalized,
+                key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")),
+            )
+        return normalized
+    return value
+
+
+def desired_policy_rules_present(
+    current_text: str, desired_text: str, policy_name: str
+) -> bool:
+    """Require an exact named-policy match; unrelated policies are ignored."""
+    desired = named_policy_shape(desired_text, policy_name)
+    current = named_policy_shape(current_text, policy_name)
+    return desired is not None and current == desired
+
+
+def policy_update_action(
+    policy_list: str, current_text: str, desired_text: str, policy_name: str
+) -> str:
+    exists = (
+        policy_name in effective_policy_names(current_text)
+        or listed_name(policy_list, policy_name)
+    )
+    if not exists:
+        return "add"
+    if not desired_policy_rules_present(current_text, desired_text, policy_name):
+        return "refresh"
+    return "keep"
 
 
 def listed_name(output_text: str, expected: str) -> bool:
@@ -250,7 +323,27 @@ def main() -> int:
         print("NemoClaw policy state is source-unverified; recover the sandbox before setup.", file=sys.stderr)
         return 2
     policy_get = output([nemoclaw, args.sandbox, "policy-get"])
-    if policy_name not in effective_policy_names(policy_get):
+    policy_action = policy_update_action(
+        policy_list,
+        policy_get,
+        policy.read_text(encoding="utf-8"),
+        policy_name,
+    )
+    if policy_action == "add":
+        run([nemoclaw, args.sandbox, "policy-add", "--from-file", str(policy), "--yes"])
+    elif policy_action == "refresh":
+        print(f"= refreshing changed policy {policy_name}")
+        run(
+            [
+                nemoclaw,
+                "sandbox",
+                "policy",
+                "remove",
+                args.sandbox,
+                policy_name,
+                "--yes",
+            ]
+        )
         run([nemoclaw, args.sandbox, "policy-add", "--from-file", str(policy), "--yes"])
     else:
         print(f"= policy {policy_name} is already applied")
