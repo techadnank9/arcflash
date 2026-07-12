@@ -32,7 +32,9 @@ ELECTRISIM_START_COOLDOWN_SECONDS = 300.0
 
 
 class HGateway(Protocol):
-    async def create(self, prompt: str) -> Any: ...
+    async def create(
+        self, prompt: str, *, max_steps: int = 25, max_time_s: float = 150
+    ) -> Any: ...
     async def get(self, session_id: str) -> Any: ...
     async def changes(self, session_id: str, from_index: int, wait_seconds: int) -> Any: ...
     async def pause(self, session_id: str) -> Any: ...
@@ -65,13 +67,15 @@ class DirectHGateway:
             max_retries=2,
         )
 
-    async def create(self, prompt: str) -> Any:
+    async def create(
+        self, prompt: str, *, max_steps: int = 25, max_time_s: float = 150
+    ) -> Any:
         return await self.client.sessions.create_session(
             agent=self.settings.hcomputer_agent,
             agent_artifact=self.settings.hcomputer_agent_artifact,
             messages=[{"type": "user_message", "message": prompt}],
-            max_steps=25,
-            max_time_s=150,
+            max_steps=max_steps,
+            max_time_s=max_time_s,
         )
 
     async def get(self, session_id: str) -> Any:
@@ -166,7 +170,9 @@ class SandboxHGateway:
         self.settings = settings
         self.runtime = runtime
 
-    async def create(self, prompt: str) -> Any:
+    async def create(
+        self, prompt: str, *, max_steps: int = 25, max_time_s: float = 150
+    ) -> Any:
         return await self.runtime.invoke(
             "create",
             {
@@ -174,8 +180,8 @@ class SandboxHGateway:
                 "agent": self.settings.hcomputer_agent,
                 "agent_artifact": self.settings.hcomputer_agent_artifact,
                 "prompt": prompt,
-                "max_steps": 25,
-                "max_time_s": 150,
+                "max_steps": max_steps,
+                "max_time_s": max_time_s,
             },
         )
 
@@ -308,8 +314,13 @@ class HComputerService:
             await self._reject_concurrent_session()
             if electrisim:
                 self._reject_electrisim_start_cooldown()
+            max_steps = 40 if electrisim else 25
+            max_time_s = 240 if electrisim else 150
             session = await self._call(
-                "HCOMPUTER_SESSION_FAILED", lambda gateway: gateway.create(prompt)
+                "HCOMPUTER_SESSION_FAILED",
+                lambda gateway: gateway.create(
+                    prompt, max_steps=max_steps, max_time_s=max_time_s
+                ),
             )
             session_id = _session_id(session)
             if session_id:

@@ -39,10 +39,16 @@ const DEMO_CHECKPOINTS = [
     match: /app\.electrisim\.com|editor free|public editor/i,
   },
   {
-    id: 'device-dialog-closed',
-    label: 'Close the Device dialog',
-    detail: 'Close the initial dialog without choosing Create New Diagram or Open Existing Diagram.',
-    match: /clos(?:e|ed|ing)[^.]{0,60}device dialog|device dialog[^.]{0,60}clos(?:e|ed|ing)|dismiss(?:ed)?[^.]{0,60}device dialog/i,
+    id: 'new-diagram',
+    label: 'Create a new untitled schematic',
+    detail: 'Choose Create New Diagram once; never open an existing project.',
+    match: /(?:create|created|open|opened)[^.]{0,80}(?:new|untitled)[^.]{0,80}(?:schematic|diagram)|(?:untitled|new) diagram[^.]{0,80}(?:canvas|schematic|created|opened)/i,
+  },
+  {
+    id: 'schematic-editor',
+    label: 'Stay in the schematic editor',
+    detail: 'Require the symbol palette and grid-paper canvas; never click Map or use geographic nodes.',
+    match: /schematic editor[^.]{0,120}(?:grid|symbol palette)|(?:grid-paper|symbol palette)[^.]{0,120}(?:schematic|never entered map|not map)/i,
   },
   {
     id: 'palette-items',

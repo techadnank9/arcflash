@@ -41,7 +41,8 @@ const completedSession = () => ({
     message: 'Public Electrisim drawing completed without login, saving, or simulation.',
     checkpoints: [
       'Opened the public Electrisim editor',
-      'Closed the Device dialog without choosing Create New Diagram or Open Existing Diagram',
+      'Created a new untitled schematic diagram without opening an existing project',
+      'Confirmed the schematic editor with symbol palette and grid-paper canvas and never entered Map Editor',
       'Located Generator ~, first Transformer, External Grid, Motor M, and Bus in the component palette',
       'Placed Generator, Transformer, two External Grids, and Motor left-to-right across the upper third',
       'Connected Generator, Transformer, both External Grids, and Motor with snapped Bus conductors',
@@ -175,8 +176,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:02Z',
           data: {
             kind: 'policy_event',
-            content: 'Close the Device dialog without choosing Create New Diagram or Open Existing Diagram.',
-            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { target: 'Device dialog X' } }],
+            content: 'Click Create New Diagram once to open a new untitled schematic; never choose Open Existing Diagram.',
+            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { target: 'Create New Diagram' } }],
           },
         },
         {
@@ -185,7 +186,7 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'The Device dialog is closed. The palette shows Generator ~, the first Transformer, External Grid, Motor M under Rotating Equipment, and the horizontal Bus conductor.',
+            text: 'Created a new untitled schematic diagram. Confirmed the schematic editor with symbol palette and grid-paper canvas and never entered Map Editor. The palette shows Generator ~, the first Transformer, External Grid, Motor M under Rotating Equipment, and the horizontal Bus conductor.',
             metadata: { url: 'https://app.electrisim.com/' },
           },
         },
@@ -226,7 +227,7 @@ await context.route('**/api/electrisim/**', async (route) => {
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Closed the Device dialog, placed Generator, the first Transformer, two External Grids, and Motor in the upper third, connected them with Bus conductors, and stopped without saving or running a simulation.'
+        ? 'Created a new untitled schematic, placed Generator, the first Transformer, two External Grids, and Motor in the upper third, connected them with Bus conductors, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;
@@ -308,7 +309,7 @@ try {
   assert.ok(sessionReads > 0, 'The lab must poll its dedicated session endpoint.');
   const checkpoints = lab.getByTestId('electrisim-checkpoints');
   await checkpoints.waitFor();
-  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 7, 'Every drawing checkpoint must have matching H evidence.');
+  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 8, 'Every drawing checkpoint must have matching H evidence.');
 
   await lab.getByRole('button', { name: 'Run independent CV-104 validation' }).click();
   const calculation = lab.getByTestId('electrisim-calculation');

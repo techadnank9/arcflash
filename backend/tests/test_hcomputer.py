@@ -64,11 +64,17 @@ class FakeRuntime:
 class FakeGateway:
     def __init__(self) -> None:
         self.prompt = ""
+        self.max_steps = 0
+        self.max_time_s = 0.0
         self.screenshot_source = ""
         self.changes_response: Any = None
 
-    async def create(self, prompt: str) -> Any:
+    async def create(
+        self, prompt: str, *, max_steps: int = 25, max_time_s: float = 150
+    ) -> Any:
         self.prompt = prompt
+        self.max_steps = max_steps
+        self.max_time_s = max_time_s
         return {"id": "h-1", "status": {"status": "pending"}}
 
     async def get(self, session_id: str) -> Any:
@@ -193,13 +199,20 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
 
     assert session["id"] == "h-1"
     assert session["workflow"] == {
-        "id": "electrisim-public-unsaved-single-line-v3",
+        "id": "electrisim-public-unsaved-single-line-v5",
         "target": "https://app.electrisim.com/",
         "allowedOrigins": ["https://app.electrisim.com"],
         "mode": "public-unsaved-draw",
         "checkpoints": [
             {"id": "editor", "label": "Open the public Electrisim editor"},
-            {"id": "device-dialog-closed", "label": "Close the Device dialog"},
+            {
+                "id": "new-diagram",
+                "label": "Create a new untitled schematic diagram",
+            },
+            {
+                "id": "schematic-editor",
+                "label": "Remain in the schematic editor and never open Map Editor",
+            },
             {
                 "id": "palette-items",
                 "label": "Locate Generator, first Transformer, External Grid, Motor, and Bus",
@@ -226,8 +239,14 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "only visit app.electrisim.com over HTTPS" in gateway.prompt
     assert "Do not sign in" in gateway.prompt
     assert "without narrating, summarizing, or planning between them" in gateway.prompt
-    assert "close the initial Device dialog with X" in gateway.prompt
-    assert "without choosing Create New Diagram or Open Existing Diagram" in gateway.prompt
+    assert "click Create New Diagram exactly once" in gateway.prompt
+    assert "never choose Open Existing Diagram" in gateway.prompt
+    assert "If Create New Diagram does not produce the schematic menu" in gateway.prompt
+    assert "Never scroll while the Device dialog is open" in gateway.prompt
+    assert "Never click the green Map button" in gateway.prompt
+    assert "Never use the Map Editor" in gateway.prompt
+    assert "If a screen says Map Editor or shows geographic map tiles" in gateway.prompt
+    assert "report SCHEMATIC_EDITOR_UNAVAILABLE" in gateway.prompt
     assert "Generator (~) from Source" in gateway.prompt
     assert "first leftmost Transformer symbol under Transformers" in gateway.prompt
     assert "two separate copies of External Grid" in gateway.prompt
@@ -240,8 +259,9 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "snapping each conductor endpoint" in gateway.prompt
     assert "do not drag the Bus section header" in gateway.prompt
     assert "do not leave merely overlapping or disconnected shapes" in gateway.prompt
-    assert "Use atomic drag_web for every palette-to-canvas placement" in gateway.prompt
-    assert "do not split a drag into move_mouse_web and click_web calls" in gateway.prompt
+    assert "Use atomic drag_web for every schematic palette-to-grid placement" in gateway.prompt
+    assert "Never click a palette button and then click the canvas" in gateway.prompt
+    assert "Do not split a drag into move_mouse_web and click_web calls" in gateway.prompt
     assert "All five component placements, including both External Grid copies" in gateway.prompt
     assert "all four Bus connections are mandatory" in gateway.prompt
     assert "report DRAW_TOOL_UNAVAILABLE" in gateway.prompt
@@ -249,6 +269,8 @@ async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guar
     assert "Simple Example" not in gateway.prompt
     assert "Do not sign in, pay, configure component values" in gateway.prompt
     assert "only claim a placement that the final observation confirms" in gateway.prompt
+    assert gateway.max_steps == 40
+    assert gateway.max_time_s == 240
     with pytest.raises(ServiceError) as active:
         await service.create()
     assert active.value.code == "HCOMPUTER_SESSION_ACTIVE"

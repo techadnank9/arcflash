@@ -24,7 +24,7 @@ class FakeElectrisimService:
             "status": {"status": "pending"},
             "agent_view_url": "https://platform.hcompany.ai/agents/sessions/h-public-1",
             "workflow": {
-                "id": "electrisim-public-unsaved-single-line-v3",
+                "id": "electrisim-public-unsaved-single-line-v5",
                 "mode": "public-unsaved-draw",
                 "checkpoints": [],
             },
@@ -102,7 +102,7 @@ async def test_dedicated_electrisim_session_routes() -> None:
 
     assert created.status_code == 201
     assert created.json()["workflow"] == {
-        "id": "electrisim-public-unsaved-single-line-v3",
+        "id": "electrisim-public-unsaved-single-line-v5",
         "mode": "public-unsaved-draw",
         "checkpoints": [],
     }
