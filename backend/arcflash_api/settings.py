@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     gradium_api_key: SecretStr | None = None
     hai_region: Literal["eu", "us"] = "eu"
     hcomputer_agent: str = "h/web-surfer-pro"
+    hcomputer_agent_artifact: str = "hackathon-dnd"
     public_app_url: str | None = None
 
     nemoclaw_mode: Literal["required", "preferred", "off"] = "required"

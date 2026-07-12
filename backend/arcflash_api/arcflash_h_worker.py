@@ -334,6 +334,7 @@ def run(action: str, payload: dict[str, Any]) -> Any:
             f"{base}/sessions",
             {
                 "agent": agent,
+                "agent_artifact": str(payload.get("agent_artifact", "hackathon-dnd")),
                 "messages": [{"type": "user_message", "message": prompt}],
                 "max_steps": min(50, max(1, int(payload.get("max_steps", 25)))),
                 "max_time_s": min(600, max(30, float(payload.get("max_time_s", 150)))),

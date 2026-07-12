@@ -31,6 +31,26 @@ def signed_redirect(session_id: str, filename: str) -> str:
     )
 
 
+def test_create_targets_hackathon_agent_artifact() -> None:
+    requested: list[tuple[str, str, dict[str, Any]]] = []
+
+    def fake_request(method: str, url: str, body: Any = None) -> dict[str, object]:
+        requested.append((method, url, body))
+        return {"id": "session-1"}
+
+    original = worker.h_request
+    worker.h_request = fake_request
+    try:
+        worker.run(
+            "create",
+            {"region": "eu", "agent": "h/web-surfer-pro", "prompt": "Open the study."},
+        )
+    finally:
+        worker.h_request = original
+
+    assert requested[0][2]["agent_artifact"] == "hackathon-dnd"
+
+
 def test_changes_explicitly_requests_agent_events() -> None:
     requested: list[str] = []
 

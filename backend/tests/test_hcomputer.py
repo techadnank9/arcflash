@@ -108,6 +108,7 @@ def settings(**values: object) -> Settings:
 
 def test_settings_default_to_verified_h_web_surfer_agent() -> None:
     assert Settings(_env_file=None).hcomputer_agent == "h/web-surfer-pro"
+    assert Settings(_env_file=None).hcomputer_agent_artifact == "hackathon-dnd"
 
 
 @pytest.mark.asyncio

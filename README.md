@@ -111,6 +111,7 @@ NemoClaw controls the local Python launcher, accessible files, credential exposu
    PUBLIC_APP_URL=https://your-deployment.example.com
    HAI_REGION=eu
    HCOMPUTER_AGENT=h/web-surfer-pro
+   HCOMPUTER_AGENT_ARTIFACT=hackathon-dnd
    NEMOCLAW_MODE=required
    NEMOCLAW_SANDBOX=arcflash-copilot
    ```

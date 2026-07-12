@@ -68,6 +68,7 @@ class DirectHGateway:
     async def create(self, prompt: str) -> Any:
         return await self.client.sessions.create_session(
             agent=self.settings.hcomputer_agent,
+            agent_artifact=self.settings.hcomputer_agent_artifact,
             messages=[{"type": "user_message", "message": prompt}],
             max_steps=25,
             max_time_s=150,
@@ -171,6 +172,7 @@ class SandboxHGateway:
             {
                 "region": self.settings.hai_region,
                 "agent": self.settings.hcomputer_agent,
+                "agent_artifact": self.settings.hcomputer_agent_artifact,
                 "prompt": prompt,
                 "max_steps": 25,
                 "max_time_s": 150,
