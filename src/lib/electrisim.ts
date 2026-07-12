@@ -158,7 +158,7 @@ function normalizeWorkflow(value: unknown): ElectrisimWorkflow | undefined {
   return {
     id,
     target,
-    mode: firstString(value.mode) ?? 'public-read-only',
+    mode: firstString(value.mode) ?? 'public-unsaved-draw',
     allowedOrigins: Array.isArray(value.allowedOrigins)
       ? value.allowedOrigins.filter((origin): origin is string => typeof origin === 'string')
       : [],

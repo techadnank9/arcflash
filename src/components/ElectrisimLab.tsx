@@ -33,40 +33,49 @@ import {
 
 const DEMO_CHECKPOINTS = [
   {
-    id: 'public-site',
-    label: 'Inspect the public Electrisim site',
-    detail: 'Visit electrisim.com without authentication.',
-    match: /https?:\/\/(?:www\.)?electrisim\.com(?:\/|$)|electrisim home|landing page/i,
-  },
-  {
-    id: 'documentation',
-    label: 'Find public short-circuit and engine information',
-    detail: 'Read the public documentation and supported calculation methods.',
-    match: /documentation|\bdocs?\b|short[ -]?circuit/i,
-  },
-  {
     id: 'editor',
     label: 'Open the public Electrisim editor',
-    detail: 'Use “Try the Editor Free”; do not sign in.',
+    detail: 'Open app.electrisim.com directly without signing in.',
     match: /app\.electrisim\.com|editor free|public editor/i,
   },
   {
-    id: 'template',
-    label: 'Select the built-in example',
-    detail: 'Choose Basic → Simple Example instead of creating or saving a project.',
-    match: /simple example|\bbasic\b/i,
+    id: 'new-diagram',
+    label: 'Create a fresh diagram',
+    detail: 'Choose Create New Diagram; never open an existing file.',
+    match: /create new diagram|fresh (?:diagram|canvas)|new diagram/i,
   },
   {
-    id: 'simulate-menu',
-    label: 'Inspect the available Simulate actions',
-    detail: 'Open the Simulate menu but do not cross a paid boundary.',
-    match: /simulate|simulation choices|analysis choices/i,
+    id: 'template',
+    label: 'Load Basic → Simple Example',
+    detail: 'Use the public built-in fixture as a safe disposable canvas.',
+    match: /simple example|basic (?:template|example)|three[ -]?bus/i,
+    requiresObservation: true,
+  },
+  {
+    id: 'bus-palette',
+    label: 'Locate the Bus palette item',
+    detail: 'Find Bus in the component palette without changing the existing fixture.',
+    match: /bus (?:item|symbol|component|palette)|component palette|palette.*bus/i,
+  },
+  {
+    id: 'bus-placed',
+    label: 'Place one unsaved Bus',
+    detail: 'Drag exactly one new Bus into an empty area and leave it unconnected.',
+    match: /(?:drag(?:ged)?|drop(?:ped)?|plac(?:e|ed)|add(?:ed)?)[^.]{0,80}(?:new )?bus|bus[^.]{0,50}(?:drag|drop|place)/i,
+  },
+  {
+    id: 'visual-confirmation',
+    label: 'Confirm the new Bus on canvas',
+    detail: 'Visually verify the added Bus before ending the session.',
+    match: /new (?:unconnected )?bus[^.]{0,80}(?:visible|appear|canvas|confirm)|(?:visible|confirm)[^.]{0,80}new (?:unconnected )?bus/i,
+    requiresObservation: true,
   },
   {
     id: 'safe-stop',
-    label: 'Stop before login, subscription, or calculation',
-    detail: 'No login, subscription, checkout, upload, save, or connected storage.',
-    match: /subscription_required|subscription|checkout|sign[ -]?in|log[ -]?in|access gate/i,
+    label: 'Stop without saving or simulation',
+    detail: 'No login, subscription, calculation, export, save, or connected storage.',
+    match: /without (?:saving|save|simulation)|did not (?:save|simulate)|no simulation|stopped before[^.]{0,80}(?:save|simulation)|remains unsaved/i,
+    requiresObservation: true,
   },
 ] as const;
 
@@ -154,9 +163,15 @@ export function ElectrisimLab() {
   const observedText = browserEvents
     .map((event) => `${event.currentUrl ?? ''} ${event.label} ${event.detail ?? ''}`)
     .join(' ') + ` ${session?.summary ?? ''}`;
+  const confirmedText = browserEvents
+    .filter((event) => event.kind === 'observation')
+    .map((event) => `${event.currentUrl ?? ''} ${event.label} ${event.detail ?? ''}`)
+    .join(' ') + ` ${session?.summary ?? ''}`;
   const observedCheckpoints = useMemo(
-    () => DEMO_CHECKPOINTS.map((checkpoint) => checkpoint.match.test(observedText)),
-    [observedText],
+    () => DEMO_CHECKPOINTS.map((checkpoint) => checkpoint.match.test(
+      'requiresObservation' in checkpoint ? confirmedText : observedText,
+    )),
+    [confirmedText, observedText],
   );
   const checkpoints = useMemo(() => DEMO_CHECKPOINTS.map((checkpoint) => ({
     ...checkpoint,
@@ -396,12 +411,12 @@ export function ElectrisimLab() {
       <header className="electrisim-header">
         <a href="/" className="electrisim-brand-link" aria-label="Back to ArcFlash Copilot home"><Brand /></a>
         <div className="electrisim-context">
-          <span>PUBLIC COMPUTER-USE LAB</span>
+          <span>PUBLIC DRAWING LAB</span>
           <strong>Electrisim</strong>
           <small>Isolated from the ArcFlash study workflow</small>
         </div>
-        <a className="electrisim-site-link" href="https://electrisim.com/" target="_blank" rel="noreferrer">
-          Open public site <ExternalLink size={13} />
+        <a className="electrisim-site-link" href="https://app.electrisim.com/" target="_blank" rel="noreferrer">
+          Open public editor <ExternalLink size={13} />
         </a>
       </header>
 
@@ -414,9 +429,9 @@ export function ElectrisimLab() {
         >
           <a href="/" className="electrisim-back"><ArrowLeft size={13} /> Back to ArcFlash</a>
           <div>
-            <span>REAL THIRD-PARTY WEBSITE · NO LOGIN</span>
-            <h1>Electrisim public browser lab</h1>
-            <p>Watch H navigate public Electrisim screens, inspect the free editor, and stop before any account or payment boundary.</p>
+            <span>REAL THIRD-PARTY EDITOR · UNSAVED DEMO</span>
+            <h1>Electrisim public drawing lab</h1>
+            <p>Watch H open a fresh example, place one Bus on the canvas, and stop without saving or simulating.</p>
           </div>
           <div className={`electrisim-state is-${currentStatus.tone}`} data-testid="electrisim-session-state" aria-live="polite">
             <i />
@@ -428,12 +443,12 @@ export function ElectrisimLab() {
         <section className="electrisim-workspace" aria-label="Electrisim browser demonstration controls">
           <aside className="electrisim-safety">
             <div className="electrisim-section-label"><ShieldCheck size={14} /><span>Requested browser scope</span></div>
-            <h2>No-login operating request</h2>
-            <p>The server sends H this fixed task and supplies no credentials or arbitrary user URL. This is an agent instruction, not a network allowlist inside H's hosted browser.</p>
+            <h2>No-login drawing request</h2>
+            <p>The server asks H to edit only a fresh, unsaved example and supplies no credentials or arbitrary user URL. This remains an agent instruction, not a network allowlist inside H's hosted browser.</p>
             <dl>
-              <div><dt>Requested origins</dt><dd>Public Electrisim pages and editor</dd></div>
-              <div><dt>Requested exclusions</dt><dd>Login, payment, upload, save, storage</dd></div>
-              <div><dt>Stop rule</dt><dd>Stop when any access gate appears</dd></div>
+              <div><dt>Requested edit</dt><dd>One new Bus on a disposable example</dd></div>
+              <div><dt>Requested exclusions</dt><dd>Simulation, login, payment, upload, save, storage</dd></div>
+              <div><dt>Stop rule</dt><dd>Stop after the new Bus is visibly confirmed</dd></div>
             </dl>
             <div className="electrisim-safety-note"><Check size={13} /><span>The independent calculation below never uses values scraped from the website.</span></div>
           </aside>
@@ -448,7 +463,7 @@ export function ElectrisimLab() {
                 {!session && (
                   <button className="button-primary electrisim-start" onClick={startSession} disabled={Boolean(controlAction)}>
                     {controlAction === 'start' ? <RefreshCw className="is-spinning" size={15} /> : <Play size={15} />}
-                    Start public browser demo
+                    Start public drawing demo
                   </button>
                 )}
                 {sessionIsActive && (
@@ -485,7 +500,7 @@ export function ElectrisimLab() {
                   <div className="electrisim-awaiting-frame">
                     <Eye size={31} />
                     <strong>{session ? 'Waiting for H observation' : 'Browser preview appears after start'}</strong>
-                    <span>{session ? 'Agent View remains the authoritative live screen.' : 'No login or subscription is required for this public walkthrough.'}</span>
+                    <span>{session ? 'Agent View remains the authoritative live screen.' : 'No login or subscription is required for this one unsaved edit.'}</span>
                   </div>
                 )}
                 {session?.agentViewUrl && (
@@ -509,8 +524,8 @@ export function ElectrisimLab() {
         <section className="electrisim-observability">
           <div className="electrisim-checkpoints" data-testid="electrisim-checkpoints">
             <div className="electrisim-section-label"><Gauge size={14} /><span>Requested checkpoints</span></div>
-            <h2>Safe browser path</h2>
-            <p>“Observed” means an H event matched that checkpoint. Requested steps are not marked complete from session status alone.</p>
+            <h2>Safe drawing path</h2>
+            <p>“Observed” requires matching H evidence. The final Bus confirmation needs an observation or final summary; session completion alone marks nothing.</p>
             <ol>
               {checkpoints.map((checkpoint, index) => {
                 const observed = observedCheckpoints[index];
@@ -546,7 +561,7 @@ export function ElectrisimLab() {
                 )) : (
                   <motion.div className="electrisim-event-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <TerminalSquare size={18} />
-                    <span><strong>No browser events yet</strong><small>{session ? 'Waiting for H session changes…' : 'Start the public browser demo to populate this feed.'}</small></span>
+                    <span><strong>No browser events yet</strong><small>{session ? 'Waiting for H session changes…' : 'Start the public drawing demo to populate this feed.'}</small></span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -611,7 +626,7 @@ export function ElectrisimLab() {
       </main>
 
       <footer className="electrisim-footer">
-        <span><ShieldCheck size={11} /> Fixed task request · no credentials supplied</span>
+        <span><ShieldCheck size={11} /> Fixed unsaved edit · no credentials supplied</span>
         <span><Bot size={11} /> H operates the browser</span>
         <span><Zap size={11} /> DigitalOcean runs independent calculations</span>
       </footer>

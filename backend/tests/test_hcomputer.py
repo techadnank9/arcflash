@@ -182,7 +182,7 @@ async def test_session_controls_and_single_flight_guard() -> None:
 
 
 @pytest.mark.asyncio
-async def test_electrisim_uses_fixed_public_prompt_and_shared_session_guard() -> None:
+async def test_electrisim_uses_fixed_unsaved_draw_prompt_and_shared_session_guard() -> None:
     gateway = FakeGateway()
     service = HComputerService(
         settings(), FakeRuntime(), sandbox_gateway=gateway  # type: ignore[arg-type]
@@ -191,11 +191,35 @@ async def test_electrisim_uses_fixed_public_prompt_and_shared_session_guard() ->
     session = await service.create_electrisim()
 
     assert session["id"] == "h-1"
-    assert session["workflow"]["id"] == "electrisim-public-browser-v1"
-    assert "Open https://electrisim.com/" in gateway.prompt
-    assert "only visit electrisim.com and app.electrisim.com" in gateway.prompt
+    assert session["workflow"] == {
+        "id": "electrisim-public-unsaved-draw-v1",
+        "target": "https://app.electrisim.com/",
+        "allowedOrigins": ["https://app.electrisim.com"],
+        "mode": "public-unsaved-draw",
+        "checkpoints": [
+            {"id": "editor", "label": "Open the public Electrisim editor"},
+            {"id": "new-diagram", "label": "Choose Create New Diagram"},
+            {"id": "template", "label": "Load Basic → Simple Example"},
+            {"id": "bus-palette", "label": "Locate Bus in the component palette"},
+            {"id": "bus-placed", "label": "Place exactly one standalone Bus"},
+            {
+                "id": "visual-confirmation",
+                "label": "Visually confirm the new Bus on the canvas",
+            },
+            {
+                "id": "safe-stop",
+                "label": "Stop without connecting, simulating, or saving",
+            },
+        ],
+    }
+    assert "Open https://app.electrisim.com/ directly" in gateway.prompt
+    assert "only visit app.electrisim.com over HTTPS" in gateway.prompt
     assert "Do not sign in" in gateway.prompt
-    assert "never claim a simulation ran" in gateway.prompt
+    assert "drag exactly one new Bus" in gateway.prompt
+    assert "do not place a second element" in gateway.prompt
+    assert "Do not open or use Simulate" in gateway.prompt
+    assert "only claim the Bus was placed if you visually confirmed it" in gateway.prompt
+    assert "never claim that it was connected, saved, or simulated" in gateway.prompt
     with pytest.raises(ServiceError) as active:
         await service.create()
     assert active.value.code == "HCOMPUTER_SESSION_ACTIVE"

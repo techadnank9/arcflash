@@ -19,7 +19,7 @@ This hackathon MVP is not an arc-flash calculation engine, compliance checker, o
 - Missing `MCC-01` clearing time stored as `null` and flagged for engineer review
 - Seven-section report preview, audit trail, approval gate, and watermarked PDF export
 - Open-source comparison adapter using pandapower and `LiaungYip/arcflash`
-- Separate `/labs/electrisim` public-browser demo with no-login safety boundaries
+- Separate `/labs/electrisim` public, unsaved drawing demo with no-login safety boundaries
 
 ## Monorepo layout
 
@@ -187,7 +187,7 @@ This path uses the official open-source `hai-agents` Python SDK and is visibly l
 | `POST /api/hcomputer/sessions/{id}/pause` | Pause the hosted H session and local replay together |
 | `POST /api/hcomputer/sessions/{id}/resume` | Resume both execution layers |
 | `DELETE /api/hcomputer/sessions/{id}` | Cancel the hosted session before stop/reset |
-| `POST /api/electrisim/sessions` | Start the fixed, no-login public Electrisim browser demo |
+| `POST /api/electrisim/sessions` | Start the fixed, no-login public Electrisim drawing demo |
 | `GET /api/electrisim/sessions/{id}` | Read the Electrisim demo session snapshot |
 | `GET /api/electrisim/sessions/{id}/changes` | Read actual H browser events and observations |
 | `POST /api/electrisim/sessions/{id}/pause` | Pause the Electrisim demo session |
@@ -206,13 +206,15 @@ Open CV-104 → Verify Study Case A → Open Arc Flash
 ```
 
 The separate Electrisim lab sends H a fixed task requesting only the public
-`electrisim.com` and `app.electrisim.com` origins. This is an agent instruction,
-not a network allowlist inside H's hosted browser. The task inspects public documentation,
-opens the public editor, selects the built-in `Basic → Simple Example` when
-available, inspects the Simulate menu, and stops before login, subscription,
-calculation, saving, or diagram edits. It shares the API's one-active-H-session
-guard with the original workflow, but does not write to ArcFlash evidence or
-reports.
+`app.electrisim.com` origin. This is an agent instruction, not a network allowlist
+inside H's hosted browser. The task opens a new, unsaved diagram, selects the
+built-in `Basic → Simple Example`, drags exactly one standalone Bus onto an
+empty area, visually confirms it, and stops. That single in-memory placement is
+the only permitted edit: H must not connect or configure the Bus, modify an
+existing element, simulate, save, export, download, upload, import, share, open
+an existing project, sign in, or connect storage. It shares the API's
+one-active-H-session guard with the original workflow, but does not write to
+ArcFlash evidence or reports.
 
 Electrisim `POST` and `DELETE` requests require
 `X-ArcFlash-Demo: electrisim-public-v1`. This non-secret custom header is a

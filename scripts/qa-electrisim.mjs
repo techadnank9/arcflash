@@ -13,6 +13,7 @@ const mockAgentViewUrl = `https://platform.hcompany.ai/agents/sessions/${mockSes
 let sessionStarts = 0;
 let sessionReads = 0;
 let sessionStops = 0;
+let sessionStopped = false;
 let calculationRuns = 0;
 let screenshotFetches = 0;
 const unexpectedCloudStarts = [];
@@ -37,12 +38,15 @@ const completedSession = () => ({
   state: 'completed',
   result: {
     success: true,
-    message: 'Public Electrisim exploration completed without login or persistent changes.',
+    message: 'Public Electrisim drawing completed without login, saving, or simulation.',
     checkpoints: [
-      'Opened the public Electrisim website',
-      'Inspected public product information',
-      'Opened the public editor entry point',
-      'Stopped before login or subscription',
+      'Opened the public Electrisim editor',
+      'Created a fresh diagram',
+      'Loaded Basic → Simple Example',
+      'Located the Bus palette item',
+      'Placed one new unconnected Bus',
+      'Visually confirmed the new Bus on canvas',
+      'Stopped without saving or simulation',
     ],
   },
 });
@@ -141,12 +145,15 @@ await context.route('**/api/electrisim/**', async (route) => {
 
   if (pathname === '/api/electrisim/sessions' && method === 'POST') {
     sessionStarts += 1;
+    sessionStopped = false;
     await fulfill(201, runningSession());
     return;
   }
   if (pathname === `/api/electrisim/sessions/${mockSessionId}` && method === 'GET') {
     sessionReads += 1;
-    await fulfill(200, sessionStarts > 1 ? completedSession() : runningSession());
+    await fulfill(200, sessionStopped
+      ? { ...runningSession(), status: 'interrupted', state: 'interrupted' }
+      : sessionStarts > 1 ? completedSession() : runningSession());
     return;
   }
   if (pathname === `/api/electrisim/sessions/${mockSessionId}/changes` && method === 'GET') {
@@ -159,9 +166,8 @@ await context.route('**/api/electrisim/**', async (route) => {
           data: {
             kind: 'observation_event',
             type: 'web',
-            text: 'Opened Electrisim documentation for short-circuit analysis.',
-            image: { source: screenshotSource, type: 'url', media_type: 'image/png' },
-            metadata: { url: 'https://electrisim.com/docs/short-circuit' },
+            text: 'Opened the public Electrisim editor. The Device dialog offers Create New Diagram.',
+            metadata: { url: 'https://app.electrisim.com/' },
           },
         },
         {
@@ -169,19 +175,49 @@ await context.route('**/api/electrisim/**', async (route) => {
           timestamp: '2026-07-11T12:00:02Z',
           data: {
             kind: 'policy_event',
-            content: 'Open the public editor entry point.',
-            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { text: 'Try the Editor Free' } }],
+            content: 'Create a fresh disposable diagram.',
+            tool_reqs: [{ id: 'tool-1', tool_name: 'click', args: { text: 'Create New Diagram' } }],
+          },
+        },
+        {
+          type: 'AgentEvent',
+          timestamp: '2026-07-11T12:00:03Z',
+          data: {
+            kind: 'observation_event',
+            type: 'web',
+            text: 'The Basic Simple Example three-bus fixture is visible and the Bus component palette is available.',
+            metadata: { url: 'https://app.electrisim.com/' },
+          },
+        },
+        {
+          type: 'AgentEvent',
+          timestamp: '2026-07-11T12:00:04Z',
+          data: {
+            kind: 'policy_event',
+            content: 'Place exactly one new Bus without connecting it.',
+            tool_reqs: [{ id: 'tool-2', tool_name: 'drag', args: { target: 'Bus palette item to an empty area of the canvas' } }],
+          },
+        },
+        {
+          type: 'AgentEvent',
+          timestamp: '2026-07-11T12:00:05Z',
+          data: {
+            kind: 'observation_event',
+            type: 'web',
+            text: 'A new unconnected Bus is visible on the canvas beside the existing three-bus fixture. The diagram remains unsaved and no simulation ran.',
+            image: { source: screenshotSource, type: 'url', media_type: 'image/png' },
+            metadata: { url: 'https://app.electrisim.com/' },
           },
         },
       ],
-      next_index: 2,
+      next_index: 5,
       status: 'running',
     } : {
       new_events: [],
       next_index: fromIndex,
       status: sessionStarts > 1 ? 'completed' : 'running',
       answer: sessionStarts > 1
-        ? 'Inspected public Electrisim screens and stopped before authentication or subscription.'
+        ? 'Opened Basic → Simple Example, placed one new unconnected Bus, confirmed the new Bus was visible on the canvas, and stopped without saving or running a simulation.'
         : undefined,
     });
     return;
@@ -195,6 +231,7 @@ await context.route('**/api/electrisim/**', async (route) => {
   }
   if (pathname === `/api/electrisim/sessions/${mockSessionId}` && method === 'DELETE') {
     sessionStops += 1;
+    sessionStopped = true;
     await fulfill(200, { ...runningSession(), status: 'interrupted', state: 'interrupted' });
     return;
   }
@@ -228,22 +265,22 @@ try {
 
   await lab.goto(`${baseUrl}/labs/electrisim`, { waitUntil: 'networkidle' });
   await lab.getByTestId('electrisim-lab').waitFor();
-  await lab.getByRole('heading', { name: 'Electrisim public browser lab' }).waitFor();
-  await lab.getByRole('heading', { name: 'No-login operating request' }).waitFor();
+  await lab.getByRole('heading', { name: 'Electrisim public drawing lab' }).waitFor();
+  await lab.getByRole('heading', { name: 'No-login drawing request' }).waitFor();
   await lab.getByRole('heading', { name: 'Independent open-source calculation' }).waitFor();
   assert.equal(sessionStarts, 0, 'Opening the lab must not start a paid H session automatically.');
   assert.equal(calculationRuns, 0, 'Opening the lab must not start a calculation automatically.');
 
-  await lab.getByRole('button', { name: 'Start public browser demo' }).click();
+  await lab.getByRole('button', { name: 'Start public drawing demo' }).click();
   await lab.getByText(mockSessionId, { exact: false }).waitFor();
   await lab.getByTestId('electrisim-session-state').waitFor();
   const agentView = lab.getByRole('link', { name: 'Open H Agent View' });
   await agentView.waitFor();
   assert.equal(await agentView.getAttribute('href'), mockAgentViewUrl, 'Agent View must use the URL returned by H.');
   assert.equal(sessionStarts, 1, 'The first lab run should create one isolated Electrisim session.');
-  await lab.getByText('Browser observation', { exact: true }).waitFor();
-  await lab.getByText('Browser action', { exact: true }).waitFor();
-  await lab.getByText(/click.*Try the Editor Free/i).waitFor();
+  await lab.getByText('Browser observation', { exact: true }).first().waitFor();
+  await lab.getByText('Browser action', { exact: true }).first().waitFor();
+  await lab.getByText(/drag.*Bus palette item/i).waitFor();
   await lab.getByAltText('Latest observation returned by the H hosted browser').waitFor();
   assert.equal(screenshotFetches, 1, 'Observation screenshots must be fetched once through the authenticated API proxy.');
   assert.deepEqual(directScreenshotRequests, [], 'The browser must not fetch credentialed H resources directly.');
@@ -253,12 +290,14 @@ try {
   assert.equal(sessionStops, 1, 'Stop must cancel the active Electrisim session.');
 
   await lab.getByRole('button', { name: 'Reset lab' }).click();
-  await lab.getByRole('button', { name: 'Start public browser demo' }).click();
+  await lab.getByRole('button', { name: 'Start public drawing demo' }).click();
   await lab.getByTestId('electrisim-session-state').getByText(/completed/i).waitFor({ timeout: 15_000 });
-  await lab.getByText('Inspected public Electrisim screens and stopped before authentication or subscription.').waitFor({ timeout: 5_000 });
+  await lab.getByText(/placed one new unconnected Bus.*stopped without saving/i).waitFor({ timeout: 5_000 });
   assert.equal(sessionStarts, 2, 'Reset should allow a second independent session.');
   assert.ok(sessionReads > 0, 'The lab must poll its dedicated session endpoint.');
-  await lab.getByTestId('electrisim-checkpoints').waitFor();
+  const checkpoints = lab.getByTestId('electrisim-checkpoints');
+  await checkpoints.waitFor();
+  assert.equal(await checkpoints.getByText('OBSERVED', { exact: true }).count(), 7, 'Every drawing checkpoint must have matching H evidence.');
 
   await lab.getByRole('button', { name: 'Run independent CV-104 validation' }).click();
   const calculation = lab.getByTestId('electrisim-calculation');
@@ -275,7 +314,7 @@ try {
 
   assert.deepEqual(unexpectedCloudStarts, [], 'Electrisim QA must never call the existing H session endpoint.');
   console.log(
-    `Electrisim QA passed: / and /study unchanged; ${sessionStarts} mocked sessions, `
+    `Electrisim drawing QA passed: / and /study unchanged; ${sessionStarts} mocked sessions, `
       + `${sessionStops} safe stop, ${calculationRuns} open-source calculation, and mobile layout verified.`,
   );
 } finally {
